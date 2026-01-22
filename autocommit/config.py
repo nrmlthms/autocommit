@@ -29,6 +29,19 @@ class Config:
     safe_mode_by_default: bool = False
     verbose_by_default: bool = False
 
+    # Retry Settings
+    api_retry_enabled: bool = True
+    api_max_retries: int = 3
+    api_initial_retry_delay: float = 1.0
+
+    # Cache Settings
+    cache_enabled: bool = True
+    cache_max_age_days: int = 30
+    cache_max_entries: int = 100
+
+    # Offline Mode
+    offline_mode: bool = False  # If True, only use cache, never call API
+
     # Repository Settings
     default_repo_path: Optional[str] = None
 
@@ -100,6 +113,10 @@ class Config:
             "LAZYCOMMIT_PUSH_BY_DEFAULT": ("push_by_default", lambda x: x.lower() in ("true", "1", "yes")),
             "LAZYCOMMIT_SAFE_MODE": ("safe_mode_by_default", lambda x: x.lower() in ("true", "1", "yes")),
             "LAZYCOMMIT_VERBOSE": ("verbose_by_default", lambda x: x.lower() in ("true", "1", "yes")),
+            "LAZYCOMMIT_API_RETRY_ENABLED": ("api_retry_enabled", lambda x: x.lower() in ("true", "1", "yes")),
+            "LAZYCOMMIT_API_MAX_RETRIES": ("api_max_retries", int),
+            "LAZYCOMMIT_CACHE_ENABLED": ("cache_enabled", lambda x: x.lower() in ("true", "1", "yes")),
+            "LAZYCOMMIT_OFFLINE_MODE": ("offline_mode", lambda x: x.lower() in ("true", "1", "yes")),
         }
 
         for env_var, mapping in env_mappings.items():
@@ -130,6 +147,13 @@ class Config:
             "push_by_default": self.push_by_default,
             "safe_mode_by_default": self.safe_mode_by_default,
             "verbose_by_default": self.verbose_by_default,
+            "api_retry_enabled": self.api_retry_enabled,
+            "api_max_retries": self.api_max_retries,
+            "api_initial_retry_delay": self.api_initial_retry_delay,
+            "cache_enabled": self.cache_enabled,
+            "cache_max_age_days": self.cache_max_age_days,
+            "cache_max_entries": self.cache_max_entries,
+            "offline_mode": self.offline_mode,
         }
 
     def save(self, config_file: Optional[Path] = None) -> None:

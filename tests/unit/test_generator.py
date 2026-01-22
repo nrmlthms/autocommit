@@ -132,7 +132,7 @@ class TestLLMCommitMessageGenerator:
 
     def test_generate_from_changeset_with_changes(self) -> None:
         """Test generation with changes."""
-        config = Config()
+        config = Config(cache_enabled=False)  # Disable cache to test API call
         changeset = ChangeSet(
             staged_changes=[
                 FileChange(
@@ -204,7 +204,7 @@ class TestLLMCommitMessageGenerator:
 
     def test_generate_from_changeset_handles_none_response(self) -> None:
         """Test handling of None response from API."""
-        config = Config()
+        config = Config(cache_enabled=False)  # Disable cache to test fallback
         changeset = ChangeSet(
             staged_changes=[
                 FileChange(
@@ -239,7 +239,7 @@ class TestLLMCommitMessageGenerator:
 
     def test_generate_from_changeset_handles_exception(self, capsys: Any) -> None:
         """Test handling of API exception."""
-        config = Config()
+        config = Config(cache_enabled=False)  # Disable cache to test fallback
         changeset = ChangeSet(
             staged_changes=[
                 FileChange(
@@ -275,7 +275,10 @@ class TestLLMCommitMessageGenerator:
 
     def test_generate_warns_high_token_usage(self, capsys: Any) -> None:
         """Test warning for high estimated token usage."""
-        config = Config(max_input_tokens=100)  # Low threshold for testing
+        config = Config(
+            max_input_tokens=100,  # Low threshold for testing
+            cache_enabled=False,  # Disable cache to test token warning
+        )
         changeset = ChangeSet(
             staged_changes=[
                 FileChange(

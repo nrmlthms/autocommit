@@ -280,7 +280,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path
     ) -> None:
         """Test that LLM failure uses fallback message."""
-        config = Config()
+        config = Config(cache_enabled=False)  # Disable cache to test fallback
 
         # Mock OpenAI to raise exception
         mock_client = MagicMock()

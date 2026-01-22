@@ -2,13 +2,15 @@
 
 import os
 import sys
-from typing import Optional
+from typing import Callable, Optional
 
 from openai import OpenAI
 
+from .cache import CommitMessageCache
 from .config import Config
 from .detector import ChangeDetector, ChangeSet
 from .exceptions import APIError, ConfigurationError
+from .retry import retry_on_api_error
 
 
 class LLMCommitMessageGenerator:
@@ -49,6 +51,14 @@ class LLMCommitMessageGenerator:
             self.client = OpenAI(api_key=self.api_key)
 
         self.model = model or config.model
+
+        # Initialize cache if enabled
+        self.cache: Optional[CommitMessageCache] = None
+        if config.cache_enabled:
+            self.cache = CommitMessageCache(
+                max_age_days=config.cache_max_age_days,
+                max_entries=config.cache_max_entries,
+            )
 
         # Validate parameters
         self._validate_config()
@@ -128,6 +138,19 @@ class LLMCommitMessageGenerator:
         if not changeset.has_changes:
             return "No changes to commit"
 
+        # Check cache first
+        if self.cache:
+            cached_message = self.cache.get(changeset)
+            if cached_message:
+                return cached_message
+
+        # If offline mode, use fallback
+        if self.config.offline_mode:
+            from .errors import print_warning
+
+            print_warning("Offline mode: Using fallback commit message")
+            return self._fallback_message(changeset)
+
         # Build context for LLM
         context = self._build_context(changeset, detector)
 
@@ -162,31 +185,21 @@ class LLMCommitMessageGenerator:
                 "Consider reducing max_context_files or max_diff_lines in config."
             )
 
-        # Generate commit message using LLM
+        # Generate commit message using LLM with retry
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": system_message,
-                    },
-                    {
-                        "role": "user",
-                        "content": user_message,
-                    },
-                ],
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-            )
+            # Wrap API call with retry decorator
+            if self.config.api_retry_enabled:
+                generate_fn = self._create_retryable_generate(
+                    system_message, user_message
+                )
+                message_str: str = generate_fn()
+            else:
+                message_str = self._call_api(system_message, user_message)
 
-            message = response.choices[0].message.content
-            if message is None:
-                return self._fallback_message(changeset)
-            # Explicitly annotate as str after checking for None
-            message_str: str = message.strip()
-            # Remove quotes if LLM added them
-            message_str = message_str.strip('"\'')
+            # Cache the result
+            if self.cache and message_str:
+                self.cache.set(changeset, message_str)
+
             return message_str
 
         except Exception as e:
@@ -201,6 +214,74 @@ class LLMCommitMessageGenerator:
             if hasattr(e, "__class__"):
                 print(f"  Error type: {e.__class__.__name__}", file=sys.stderr)
             return self._fallback_message(changeset)
+
+    def _call_api(self, system_message: str, user_message: str) -> str:
+        """
+        Make the actual API call to OpenAI.
+
+        Args:
+            system_message: System prompt
+            user_message: User prompt
+
+        Returns:
+            Generated commit message
+        """
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_message,
+                },
+                {
+                    "role": "user",
+                    "content": user_message,
+                },
+            ],
+            temperature=self.config.temperature,
+            max_tokens=self.config.max_tokens,
+        )
+
+        message = response.choices[0].message.content
+        if message is None:
+            raise APIError("API returned empty response")
+
+        # Clean up message
+        message_str: str = message.strip()
+        message_str = message_str.strip('"\'')
+        return message_str
+
+    def _create_retryable_generate(
+        self, system_message: str, user_message: str
+    ) -> Callable[[], str]:
+        """
+        Create a retryable version of API call.
+
+        Args:
+            system_message: System prompt
+            user_message: User prompt
+
+        Returns:
+            Callable that makes API call with retry
+        """
+
+        def on_retry(exception: Exception, attempt: int, delay: float) -> None:
+            """Callback for retry events."""
+            from .errors import print_warning
+
+            print_warning(
+                f"API call failed (attempt {attempt}). Retrying in {delay:.1f}s..."
+            )
+
+        @retry_on_api_error(
+            max_retries=self.config.api_max_retries,
+            initial_delay=self.config.api_initial_retry_delay,
+            on_retry=on_retry,
+        )
+        def generate() -> str:
+            return self._call_api(system_message, user_message)
+
+        return generate
 
     def _build_context(self, changeset: ChangeSet, detector: ChangeDetector) -> str:
         """Build context string for LLM prompt."""
