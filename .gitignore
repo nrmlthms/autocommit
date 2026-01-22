@@ -81,6 +81,13 @@ cover/
 pytest.xml
 pytest-coverage.txt
 
+# Test artifacts
+test_*.pyc
+test_validation.py
+test_generator_validation.py
+.pytest_cache/
+*.test.log
+
 # Translations
 *.mo
 *.pot
@@ -198,8 +205,23 @@ logs/
 #uv files
 uv.lock
 
-#TODO
+# TODO
 TODO
 
-#project files
+# Project files
 .lazycommitrc
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup

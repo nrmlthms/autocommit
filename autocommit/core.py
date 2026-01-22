@@ -8,6 +8,14 @@ from typing import Optional
 
 from .config import Config
 from .detector import ChangeDetector, ChangeSet
+from .errors import print_error, print_success, print_warning
+from .exceptions import (
+    AutoCommitError,
+    CommitFailedError,
+    NoChangesError,
+    PushFailedError,
+    ValidationError,
+)
 from .generator import LLMCommitMessageGenerator
 
 
@@ -78,7 +86,10 @@ class AutoCommit:
             changeset = self.detector.get_changes(include_diffs=True)
 
             if not changeset.has_changes:
-                print("No changes detected. Nothing to commit.")
+                if verbose:
+                    print_warning("No changes detected. Nothing to commit.")
+                else:
+                    print("No changes detected. Nothing to commit.")
                 return 0
 
             # Display changes
@@ -119,8 +130,14 @@ class AutoCommit:
             else:
                 if verbose:
                     print("\nCreating commit...")
-                commit_sha = self._commit(commit_message)
-                print(f"✓ Committed: {commit_message}")
+                try:
+                    commit_sha = self._commit(commit_message)
+                    print_success(f"Committed: {commit_message}")
+                except subprocess.CalledProcessError as e:
+                    raise CommitFailedError(
+                        message=str(e),
+                        stderr=e.stderr if e.stderr else None,
+                    )
 
             # Push
             if push:
@@ -130,35 +147,57 @@ class AutoCommit:
                     if verbose:
                         print("\nPushing to remote...")
 
-                    # Try to push, rollback on failure if not in safe mode or if safe mode
+                    # Try to push, rollback on failure
                     try:
                         self._push()
-                        print("✓ Pushed to remote")
+                        print_success("Pushed to remote")
 
                         # Clean up backup branch on successful push
                         if backup_branch:
                             self._delete_backup_branch(backup_branch)
                             if verbose:
-                                print(f"✓ Cleaned up backup branch: {backup_branch}")
+                                print_success(f"Cleaned up backup branch: {backup_branch}")
 
                     except subprocess.CalledProcessError as e:
                         # Push failed - rollback if we have a commit
                         if commit_sha:
-                            print("\n✗ Push failed. Rolling back commit...", file=sys.stderr)
+                            print_warning("Push failed. Rolling back commit...")
                             self._rollback_commit(backup_branch)
-                            print("✓ Commit rolled back successfully", file=sys.stderr)
+                            print_success("Commit rolled back successfully")
 
                             if backup_branch:
-                                print(f"✓ Your changes are preserved in branch: {backup_branch}", file=sys.stderr)
-                        raise
+                                print_success(f"Your changes are preserved in branch: {backup_branch}")
+
+                        # Raise PushFailedError with context
+                        raise PushFailedError(stderr=e.stderr if e.stderr else None)
 
             return 0
 
-        except subprocess.CalledProcessError as e:
-            print(f"Git error: {e.stderr if e.stderr else str(e)}", file=sys.stderr)
+        except AutoCommitError as e:
+            # Handle our custom exceptions with formatted output
+            print_error(e, show_suggestion=True, use_colors=True)
             return 1
+        except subprocess.CalledProcessError as e:
+            # Handle unexpected git errors
+            from .exceptions import GitError
+
+            git_error = GitError(
+                message=f"Git command failed: {e.cmd}",
+                stderr=e.stderr if e.stderr else None,
+                suggestion="Check the git output above for details.",
+            )
+            print_error(git_error, show_suggestion=True, use_colors=True)
+            return 1
+        except KeyboardInterrupt:
+            print("\n\nOperation cancelled by user.", file=sys.stderr)
+            return 130  # Standard exit code for SIGINT
         except Exception as e:
-            print(f"Error: {e}", file=sys.stderr)
+            # Handle unexpected errors
+            print_error(e, show_suggestion=False, use_colors=True)
+            if verbose:
+                import traceback
+                print("\nFull traceback:", file=sys.stderr)
+                traceback.print_exc()
             return 1
 
     def _display_changes(self, changeset: ChangeSet, verbose: bool = False) -> None:
@@ -194,7 +233,10 @@ class AutoCommit:
             ValueError: If message is invalid
         """
         if not message or not message.strip():
-            raise ValueError("Commit message cannot be empty")
+            raise ValidationError(
+                message="Commit message cannot be empty",
+                field="commit_message",
+            )
 
         # Strip leading/trailing whitespace
         message = message.strip()
@@ -202,8 +244,9 @@ class AutoCommit:
         # Check length
         max_length = self.config.max_message_length
         if len(message) > max_length:
-            raise ValueError(
-                f"Commit message too long ({len(message)} chars). Maximum is {max_length} characters."
+            raise ValidationError(
+                message=f"Commit message too long ({len(message)} chars). Maximum is {max_length} characters.",
+                field="commit_message",
             )
 
         # Remove or replace control characters (except newlines and tabs)
@@ -212,7 +255,10 @@ class AutoCommit:
 
         # Ensure no null bytes (can cause subprocess issues)
         if '\x00' in message:
-            raise ValueError("Commit message contains null bytes")
+            raise ValidationError(
+                message="Commit message contains null bytes",
+                field="commit_message",
+            )
 
         return message
 

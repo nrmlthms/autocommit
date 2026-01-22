@@ -4,7 +4,9 @@ import subprocess
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
+
+from .exceptions import NotAGitRepositoryError
 
 
 class FileStatus(Enum):
@@ -65,7 +67,7 @@ class ChangeSet:
 class ChangeDetector:
     """Detect and analyze changes in a git repository."""
 
-    def __init__(self, repo_path: str | Path = "."):
+    def __init__(self, repo_path: Union[str, Path] = "."):
         """
         Initialize the change detector.
 
@@ -80,11 +82,11 @@ class ChangeDetector:
         try:
             self._run_git_command(["rev-parse", "--git-dir"])
         except subprocess.CalledProcessError:
-            raise ValueError(f"{self.repo_path} is not a git repository")
+            raise NotAGitRepositoryError(str(self.repo_path))
 
     def _run_git_command(
         self, args: List[str], check: bool = True
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess[str]:
         """Run a git command in the repository."""
         return subprocess.run(
             ["git", "-C", str(self.repo_path)] + args,
@@ -179,8 +181,17 @@ class ChangeDetector:
         return untracked
 
     def _parse_status(self, status_code: str) -> FileStatus:
-        """Parse git status code to FileStatus enum."""
-        status_map = {
+        """
+        Parse git status code to FileStatus enum.
+
+        Args:
+            status_code: Single character git status code
+
+        Returns:
+            Corresponding FileStatus enum value. Defaults to FileStatus.MODIFIED
+            for unknown status codes.
+        """
+        status_map: dict[str, FileStatus] = {
             "M": FileStatus.MODIFIED,
             "A": FileStatus.ADDED,
             "D": FileStatus.DELETED,
@@ -188,6 +199,7 @@ class ChangeDetector:
             "C": FileStatus.COPIED,
             "U": FileStatus.UNMERGED,
         }
+        # Explicitly return MODIFIED as default for unknown status codes
         return status_map.get(status_code, FileStatus.MODIFIED)
 
     def _get_file_diff(self, file_path: str, staged: bool = False) -> str:
@@ -200,7 +212,7 @@ class ChangeDetector:
         result = self._run_git_command(args)
         return result.stdout
 
-    def get_diff_stats(self, file_path: str | Path) -> dict:
+    def get_diff_stats(self, file_path: Union[str, Path]) -> dict[str, int]:
         """
         Get statistics about changes in a file.
 
@@ -230,14 +242,14 @@ class ChangeDetector:
 
         return {"additions": 0, "deletions": 0, "changes": 0}
 
-    def is_file_ignored(self, file_path: str | Path) -> bool:
+    def is_file_ignored(self, file_path: Union[str, Path]) -> bool:
         """Check if a file is ignored by git."""
         result = self._run_git_command(
             ["check-ignore", str(file_path)], check=False
         )
         return result.returncode == 0
 
-    def stage_file(self, file_path: str | Path) -> None:
+    def stage_file(self, file_path: Union[str, Path]) -> None:
         """Stage a file for commit."""
         self._run_git_command(["add", str(file_path)])
 
@@ -245,7 +257,7 @@ class ChangeDetector:
         """Stage all changes."""
         self._run_git_command(["add", "-A"])
 
-    def unstage_file(self, file_path: str | Path) -> None:
+    def unstage_file(self, file_path: Union[str, Path]) -> None:
         """Unstage a file."""
         self._run_git_command(["reset", "HEAD", str(file_path)])
 

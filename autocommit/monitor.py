@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Callable, Optional, Set
+from typing import Awaitable, Callable, Optional, Set, Union
 from enum import Enum
 
 from watchfiles import awatch, Change
@@ -20,7 +20,7 @@ class FileMonitor:
 
     def __init__(
         self,
-        watch_path: str | Path,
+        watch_path: Union[str, Path],
         recursive: bool = True,
         ignore_patterns: Optional[Set[str]] = None,
     ):
@@ -43,7 +43,7 @@ class FileMonitor:
             '.DS_Store',
         }
         self._running = False
-        self._callback: Optional[Callable] = None
+        self._callback: Optional[Callable[[ChangeType, Path], Union[None, Awaitable[None]]]] = None
 
     def _should_ignore(self, path: Path) -> bool:
         """Check if a path should be ignored based on patterns."""
@@ -58,7 +58,7 @@ class FileMonitor:
 
     async def start(
         self,
-        callback: Callable[[ChangeType, Path], None],
+        callback: Callable[[ChangeType, Path], Union[None, Awaitable[None]]],
         debounce: int = 1600,
     ) -> None:
         """
@@ -114,7 +114,7 @@ class SyncFileMonitor:
 
     def __init__(
         self,
-        watch_path: str | Path,
+        watch_path: Union[str, Path],
         recursive: bool = True,
         ignore_patterns: Optional[Set[str]] = None,
     ):
@@ -146,12 +146,12 @@ class SyncFileMonitor:
 
 if __name__ == "__main__":
     # Example usage
-    async def on_change(change_type: ChangeType, path: Path):
+    async def on_change(change_type: ChangeType, path: Path) -> None:
         """Example callback function."""
         print(f"{change_type.name}: {path}")
 
     # Async usage
-    async def main():
+    async def main() -> None:
         monitor = FileMonitor(".", recursive=True)
         try:
             await monitor.start(on_change)

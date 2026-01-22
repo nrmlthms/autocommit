@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional, Union
 
 
 @dataclass
@@ -22,6 +22,7 @@ class Config:
     max_message_length: int = 500
     max_context_files: int = 10
     max_diff_lines: int = 20
+    max_input_tokens: int = 8000  # Maximum estimated input tokens before warning
 
     # Behavior Settings
     push_by_default: bool = True
@@ -68,7 +69,7 @@ class Config:
 
         return config
 
-    def _apply_dict(self, config_dict: dict) -> None:
+    def _apply_dict(self, config_dict: dict[str, Union[str, int, float, bool]]) -> None:
         """Apply configuration from a dictionary."""
         for key, value in config_dict.items():
             if hasattr(self, key):
@@ -88,13 +89,14 @@ class Config:
 
     def _apply_env_vars(self) -> None:
         """Apply configuration from environment variables."""
-        env_mappings = {
+        env_mappings: dict[str, Union[str, tuple[str, Callable[[str], Any]]]] = {
             "OPENAI_API_KEY": "api_key",
             "BASE_URL": "base_url",
             "LAZYCOMMIT_MODEL": "model",
             "LAZYCOMMIT_TEMPERATURE": ("temperature", float),
             "LAZYCOMMIT_MAX_TOKENS": ("max_tokens", int),
             "LAZYCOMMIT_MAX_MESSAGE_LENGTH": ("max_message_length", int),
+            "LAZYCOMMIT_MAX_INPUT_TOKENS": ("max_input_tokens", int),
             "LAZYCOMMIT_PUSH_BY_DEFAULT": ("push_by_default", lambda x: x.lower() in ("true", "1", "yes")),
             "LAZYCOMMIT_SAFE_MODE": ("safe_mode_by_default", lambda x: x.lower() in ("true", "1", "yes")),
             "LAZYCOMMIT_VERBOSE": ("verbose_by_default", lambda x: x.lower() in ("true", "1", "yes")),
@@ -110,11 +112,12 @@ class Config:
                     # Mapping with type conversion
                     attr_name, converter = mapping
                     try:
-                        setattr(self, attr_name, converter(value))
+                        converted_value: Any = converter(value)
+                        setattr(self, attr_name, converted_value)
                     except (ValueError, TypeError):
                         pass  # Ignore invalid values
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Union[int, float, str, bool]]:
         """Convert configuration to dictionary."""
         return {
             "model": self.model,
@@ -123,6 +126,7 @@ class Config:
             "max_message_length": self.max_message_length,
             "max_context_files": self.max_context_files,
             "max_diff_lines": self.max_diff_lines,
+            "max_input_tokens": self.max_input_tokens,
             "push_by_default": self.push_by_default,
             "safe_mode_by_default": self.safe_mode_by_default,
             "verbose_by_default": self.verbose_by_default,
