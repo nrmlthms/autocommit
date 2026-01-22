@@ -197,3 +197,9 @@ logs/
 
 #uv files
 uv.lock
+
+#TODO
+TODO
+
+#project files
+.lazycommitrc

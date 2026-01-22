@@ -1,0 +1,11 @@
+{
+  "model": "gpt-4o-mini",
+  "temperature": 0.7,
+  "max_tokens": 100,
+  "max_message_length": 500,
+  "max_context_files": 10,
+  "max_diff_lines": 20,
+  "push_by_default": true,
+  "safe_mode_by_default": false,
+  "verbose_by_default": false
+}

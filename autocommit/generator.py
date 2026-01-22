@@ -6,29 +6,48 @@ from typing import Optional
 
 from openai import OpenAI
 
+from .config import Config
 from .detector import ChangeDetector, ChangeSet
 
 
 class LLMCommitMessageGenerator:
     """Generate commit messages using LLM via OpenAI client."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
+    def __init__(
+        self,
+        config: Optional[Config] = None,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
         """
         Initialize the LLM commit message generator.
 
         Args:
-            api_key: OpenAI API key (if None, reads from OPENAI_API_KEY env var)
-            model: OpenAI model to use for generation
+            config: Config object (if None, loads default config)
+            api_key: OpenAI API key (overrides config if provided)
+            model: OpenAI model to use (overrides config if provided)
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        # Load config if not provided
+        if config is None:
+            config = Config.load()
+
+        self.config = config
+
+        # Override config with explicit parameters
+        self.api_key = api_key or config.api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "OpenAI API key not found. Set OPENAI_API_KEY environment variable "
-                "or pass api_key parameter."
+                "API key not found. Set OPENAI_API_KEY or BASE_URL environment variable, "
+                "add it to ~/.lazycommitrc, or pass api_key parameter."
             )
 
-        self.client = OpenAI(api_key=self.api_key)
-        self.model = model
+        # Initialize OpenAI client with optional base_url for OpenRouter support
+        if config.base_url:
+            self.client = OpenAI(api_key=self.api_key, base_url=config.base_url)
+        else:
+            self.client = OpenAI(api_key=self.api_key)
+
+        self.model = model or config.model
 
     def generate_from_changeset(
         self, changeset: ChangeSet, detector: ChangeDetector
@@ -71,8 +90,8 @@ class LLMCommitMessageGenerator:
                         "content": f"Generate a commit message for these changes:\n\n{context}",
                     },
                 ],
-                temperature=0.7,
-                max_tokens=100,
+                temperature=self.config.temperature,
+                max_tokens=self.config.max_tokens,
             )
 
             message = response.choices[0].message.content.strip()
@@ -96,19 +115,19 @@ class LLMCommitMessageGenerator:
 
         if all_changes:
             lines.append("Modified/Added/Deleted files:")
-            for change in all_changes[:10]:  # Limit to first 10 files
+            for change in all_changes[:self.config.max_context_files]:
                 relative_path = change.path.relative_to(detector.repo_path)
                 lines.append(f"  {change.status.value} {relative_path}")
 
                 # Add diff for modified/added files (truncated)
                 if change.diff and len(change.diff) > 0:
-                    diff_lines = change.diff.split('\n')[:20]  # First 20 lines of diff
+                    diff_lines = change.diff.split('\n')[:self.config.max_diff_lines]
                     lines.append("    " + "\n    ".join(diff_lines))
 
         # Add untracked files
         if changeset.untracked_files:
             lines.append("\nUntracked files:")
-            for path in changeset.untracked_files[:10]:  # Limit to first 10
+            for path in changeset.untracked_files[:self.config.max_context_files]:
                 relative_path = path.relative_to(detector.repo_path)
                 lines.append(f"  ?? {relative_path}")
 

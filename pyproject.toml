@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "autocommit"
+name = "lazycommit-cli"
 version = "0.1.0"
 description = "Automatic git commit and push tool with LLM-generated commit messages"
 readme = "README.md"
@@ -38,7 +38,7 @@ dev = [
 ]
 
 [project.scripts]
-autocommit = "autocommit.cli:main"
+lazycommit = "autocommit.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/nrmlthms/autocommit"
