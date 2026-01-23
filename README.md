@@ -29,7 +29,7 @@ pip install lazycommit-cli
 Or install from GitHub:
 
 ```bash
-pip install git+https://github.com/nrmlthms/autocommit.git
+pip install git+https://github.com/nrmlthms/lazycommit.git
 ```
 
 ## Setup
@@ -289,8 +289,8 @@ Because typing commit messages is easy but boring. This tool saves me from doing
 
 ```bash
 # Clone the repo
-git clone https://github.com/nrmlthms/autocommit.git
-cd autocommit
+git clone https://github.com/nrmlthms/lazycommit.git
+cd lazycommit
 
 # Install dependencies
 pip install -e ".[dev]"
@@ -299,7 +299,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run type checking
-mypy autocommit
+mypy lazycommit
 ```
 
 ## License

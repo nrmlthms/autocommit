@@ -462,7 +462,7 @@ class AutoCommit:
 
         # Generate backup branch name with timestamp
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        backup_branch = f"autocommit-backup-{timestamp}"
+        backup_branch = f"lazycommit-backup-{timestamp}"
 
         # Create the backup branch at current HEAD
         subprocess.run(

@@ -136,9 +136,8 @@ class ChangeDetector:
 
             # Handle renamed files: R<percentage>\told_path\tnew_path
             if status == FileStatus.RENAMED and len(parts) >= 3:
-                old_path = parts[1]
-                new_path = parts[2]
-                file_path = new_path  # Use new path for current reference
+                # parts[1] is old_path, parts[2] is new_path
+                file_path = parts[2]  # Use new path for current reference
             else:
                 file_path = parts[1]
 
@@ -170,9 +169,8 @@ class ChangeDetector:
 
             # Handle renamed files: R<percentage>\told_path\tnew_path
             if status == FileStatus.RENAMED and len(parts) >= 3:
-                old_path = parts[1]
-                new_path = parts[2]
-                file_path = new_path  # Use new path for current reference
+                # parts[1] is old_path, parts[2] is new_path
+                file_path = parts[2]  # Use new path for current reference
             else:
                 file_path = parts[1]
 

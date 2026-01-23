@@ -37,5 +37,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable token limits and context size
 - Progress indicators for all long-running operations
 
-[Unreleased]: https://github.com/nrmlthms/autocommit/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/nrmlthms/autocommit/releases/tag/v0.1.0
+[Unreleased]: https://github.com/nrmlthms/lazycommit/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/nrmlthms/lazycommit/releases/tag/v0.1.0

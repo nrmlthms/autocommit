@@ -195,7 +195,7 @@ class TestEndToEndWorkflows:
 
             # When push=False, backup branch is retained (not cleaned up)
             # This is expected behavior since cleanup only happens on successful push
-            assert "autocommit-backup" in branches_after
+            assert "lazycommit-backup" in branches_after
 
     def test_verbose_output(
         self, git_repo_with_untracked_files: Path, capsys: pytest.CaptureFixture

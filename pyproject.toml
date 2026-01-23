@@ -38,9 +38,9 @@ monitor = [
 lazycommit = "lazycommit.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/nrmlthms/autocommit"
-Repository = "https://github.com/nrmlthms/autocommit"
-Issues = "https://github.com/nrmlthms/autocommit/issues"
+Homepage = "https://github.com/nrmlthms/lazycommit"
+Repository = "https://github.com/nrmlthms/lazycommit"
+Issues = "https://github.com/nrmlthms/lazycommit/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["lazycommit"]

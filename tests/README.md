@@ -48,7 +48,7 @@ pytest tests/unit/test_config.py::TestConfig::test_default_config
 
 ### Run tests with coverage
 ```bash
-pytest --cov=autocommit --cov-report=html
+pytest --cov=lazycommit --cov-report=html
 ```
 
 ### Run tests in verbose mode
@@ -144,7 +144,7 @@ Tests can be run in CI/CD pipelines:
 - name: Run tests
   run: |
     pip install -e ".[dev]"
-    pytest --cov=autocommit --cov-report=xml
+    pytest --cov=lazycommit --cov-report=xml
 ```
 
 ## Troubleshooting

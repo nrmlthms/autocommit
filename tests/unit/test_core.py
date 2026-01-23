@@ -338,7 +338,7 @@ class TestAutoCommit:
 
             backup_branch = autocommit._create_backup_branch()
 
-            assert backup_branch.startswith("autocommit-backup-")
+            assert backup_branch.startswith("lazycommit-backup-")
 
             # Verify branch exists
             result = subprocess.run(
