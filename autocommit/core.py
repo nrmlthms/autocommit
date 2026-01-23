@@ -114,10 +114,13 @@ class AutoCommit:
                     console.print(f"\n{repo_state.suggestion}\n", style="dim")
 
             # Detect changes
-            if verbose:
-                display_status("Detecting changes...")
-
-            changeset = self.detector.get_changes(include_diffs=True)
+            if self.config.show_progress:
+                with console.status(
+                    "[cyan]Detecting changes...[/cyan]", spinner="dots"
+                ):
+                    changeset = self.detector.get_changes(include_diffs=True)
+            else:
+                changeset = self.detector.get_changes(include_diffs=True)
 
             if not changeset.has_changes:
                 if verbose:
@@ -133,9 +136,13 @@ class AutoCommit:
             if dry_run:
                 console.print("\n[bold cyan][DRY RUN][/bold cyan] Would stage all changes")
             else:
-                if verbose:
-                    display_status("Staging all changes...")
-                self.detector.stage_all()
+                if self.config.show_progress:
+                    with console.status(
+                        "[cyan]Staging all changes...[/cyan]", spinner="dots"
+                    ):
+                        self.detector.stage_all()
+                else:
+                    self.detector.stage_all()
 
             # Generate or use provided commit message
             if message:
@@ -182,10 +189,14 @@ class AutoCommit:
             if dry_run:
                 console.print("[bold cyan][DRY RUN][/bold cyan] Would create commit")
             else:
-                if verbose:
-                    display_status("Creating commit...")
                 try:
-                    commit_sha = self._commit(commit_message)
+                    if self.config.show_progress:
+                        with console.status(
+                            "[cyan]Creating commit...[/cyan]", spinner="dots"
+                        ):
+                            commit_sha = self._commit(commit_message)
+                    else:
+                        commit_sha = self._commit(commit_message)
                     display_success(f"Committed: {commit_message}")
                 except subprocess.CalledProcessError as e:
                     raise CommitFailedError(
@@ -198,13 +209,15 @@ class AutoCommit:
                 if dry_run:
                     console.print("[bold cyan][DRY RUN][/bold cyan] Would push to remote")
                 else:
-                    if verbose:
-                        console.print()
-                        display_status("Pushing to remote...")
-
                     # Try to push, rollback on failure
                     try:
-                        self._push()
+                        if self.config.show_progress:
+                            with console.status(
+                                "[cyan]Pushing to remote...[/cyan]", spinner="dots"
+                            ):
+                                self._push()
+                        else:
+                            self._push()
                         display_success("Pushed to remote")
 
                         # Clean up backup branch on successful push

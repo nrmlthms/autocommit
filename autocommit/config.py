@@ -29,6 +29,7 @@ class Config:
     safe_mode_by_default: bool = False
     verbose_by_default: bool = False
     interactive_mode: bool = True  # Prompt user to review/edit generated messages
+    show_progress: bool = True  # Show spinner/progress indicators during slow operations
 
     # Retry Settings
     api_retry_enabled: bool = True

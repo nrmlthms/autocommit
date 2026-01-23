@@ -218,7 +218,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test verbose mode produces detailed output."""
-        config = Config(interactive_mode=False)
+        config = Config(interactive_mode=False, show_progress=False)
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -241,10 +241,10 @@ class TestEndToEndWorkflows:
             assert exit_code == 0
 
             captured = capsys.readouterr()
-            assert "Detecting changes" in captured.out
-            assert "Staging all changes" in captured.out
+            assert "Checking repository state" in captured.out
             assert "Generating commit message" in captured.out
-            assert "Creating commit" in captured.out
+            assert "Committed:" in captured.out
+            assert "Untracked Files:" in captured.out
 
     def test_custom_message_workflow(
         self, git_repo_with_untracked_files: Path

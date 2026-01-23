@@ -5,12 +5,16 @@ import sys
 from typing import Callable, Optional
 
 from openai import OpenAI
+from rich.console import Console
+from rich.status import Status
 
 from .cache import CommitMessageCache
 from .config import Config
 from .detector import ChangeDetector, ChangeSet
 from .exceptions import APIError, ConfigurationError
 from .retry import retry_on_api_error
+
+console = Console()
 
 
 class LLMCommitMessageGenerator:
@@ -187,14 +191,28 @@ class LLMCommitMessageGenerator:
 
         # Generate commit message using LLM with retry
         try:
-            # Wrap API call with retry decorator
-            if self.config.api_retry_enabled:
-                generate_fn = self._create_retryable_generate(
-                    system_message, user_message
-                )
-                message_str: str = generate_fn()
+            # Show progress indicator if enabled
+            if self.config.show_progress:
+                with console.status(
+                    "[cyan]Generating commit message...[/cyan]", spinner="dots"
+                ):
+                    # Wrap API call with retry decorator
+                    if self.config.api_retry_enabled:
+                        generate_fn = self._create_retryable_generate(
+                            system_message, user_message
+                        )
+                        message_str: str = generate_fn()
+                    else:
+                        message_str = self._call_api(system_message, user_message)
             else:
-                message_str = self._call_api(system_message, user_message)
+                # No progress indicator
+                if self.config.api_retry_enabled:
+                    generate_fn = self._create_retryable_generate(
+                        system_message, user_message
+                    )
+                    message_str: str = generate_fn()
+                else:
+                    message_str = self._call_api(system_message, user_message)
 
             # Cache the result
             if self.cache and message_str:
