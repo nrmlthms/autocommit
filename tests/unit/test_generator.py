@@ -342,11 +342,12 @@ class TestLLMCommitMessageGenerator:
 
             context = gen._build_context(changeset, mock_detector)
 
-            assert "Total files changed: 3" in context
+            assert "Total files: 3" in context
             assert "file1.py" in context
             assert "file2.py" in context
             assert "file3.py" in context
-            assert "M " in context or "A " in context
+            # Check for status indicators in new format
+            assert "[M]" in context or "[A]" in context or "[?]" in context
 
     def test_fallback_message_single_file(self) -> None:
         """Test fallback message for single file."""

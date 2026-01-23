@@ -159,16 +159,86 @@ class LLMCommitMessageGenerator:
         context = self._build_context(changeset, detector)
 
         # Estimate token count before API call
-        system_message = (
-            "You are a helpful assistant that generates concise, "
-            "conventional commit messages based on git diffs. "
-            "Follow the conventional commits format: "
-            "<type>: <description>. "
-            "Types: feat, fix, docs, style, refactor, test, chore. "
-            "Keep the message under 72 characters if possible. "
-            "Be specific but concise."
-        )
-        user_message = f"Generate a commit message for these changes:\n\n{context}"
+        system_message = """You are an expert at writing clear, professional commit messages following the Conventional Commits specification.
+
+Your task is to analyze git diffs and create commit messages that are:
+- Clear and descriptive
+- Follow best practices
+- Easy to understand at a glance
+
+RULES:
+1. Format: <type>(<scope>): <description>
+   - type: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+   - scope: optional, use when changes affect specific component/module
+   - description: imperative mood, lowercase, no period at end
+
+2. Subject line (first line):
+   - Maximum 72 characters (ideally 50)
+   - Explain WHAT changed, not HOW
+   - Use imperative mood: "add" not "added" or "adds"
+   - Be specific but concise
+
+3. Type selection guide:
+   - feat: New feature or capability for the user
+   - fix: Bug fix that resolves an issue
+   - docs: Documentation changes only
+   - style: Code style/formatting (no logic change)
+   - refactor: Code restructuring (no behavior change)
+   - perf: Performance improvements
+   - test: Adding or updating tests
+   - chore: Maintenance tasks, dependencies, config
+   - ci: CI/CD pipeline changes
+   - build: Build system or external dependency changes
+
+4. Body (if multiple significant changes):
+   - Leave blank line after subject
+   - Use bullet points with "- " prefix
+   - Explain WHY the change was needed, not HOW it was implemented
+   - Reference issue numbers if mentioned in code/comments (e.g., "Fixes #123")
+   - Keep lines under 72 characters
+
+5. Breaking changes:
+   - Add "BREAKING CHANGE:" in body or append "!" after type
+   - Explain the breaking change and migration path
+
+EXAMPLES:
+
+Good:
+feat(auth): add OAuth2 authentication flow
+fix(parser): resolve crash when handling empty input
+docs: update installation instructions for Python 3.12
+refactor(api): simplify error handling logic
+perf(database): optimize query performance with indexes
+
+With body:
+feat(api): add user profile endpoint
+
+- Implement GET /api/users/:id endpoint
+- Add profile photo upload support
+- Include privacy settings in response
+
+Fixes #456
+
+Bad (avoid):
+fix: bug fix (too vague)
+feat: added new stuff (past tense, vague)
+update files (no type, unclear)
+Fixed the thing that was broken (past tense, unclear)
+
+OUTPUT FORMAT:
+Return ONLY the commit message, nothing else. No explanations, no quotes, no markdown formatting.
+If the changes are too complex to summarize in one commit, focus on the primary change."""
+
+        user_message = f"""Analyze these git changes and generate a commit message:
+
+{context}
+
+Remember:
+- Use conventional commits format
+- Subject line under 72 characters
+- Focus on WHAT and WHY, not HOW
+- Be specific and actionable
+- Use imperative mood"""
 
         # Estimate tokens for cost awareness
         estimated_input_tokens = (
@@ -305,29 +375,65 @@ class LLMCommitMessageGenerator:
         """Build context string for LLM prompt."""
         lines = []
 
-        # Add file changes summary
-        lines.append(f"Total files changed: {changeset.total_changes}\n")
+        # Add file changes summary with types
+        lines.append(f"Repository changes summary:")
+        lines.append(f"  Total files: {changeset.total_changes}")
 
-        # Process staged and unstaged changes
+        # Categorize files by type for better scope understanding
+        file_types = {}
         all_changes = changeset.staged_changes + changeset.unstaged_changes
 
+        for change in all_changes:
+            ext = change.path.suffix.lower()
+            if ext not in file_types:
+                file_types[ext] = []
+            file_types[ext].append(change)
+
+        if file_types:
+            type_summary = ", ".join([f"{len(files)}{ext or ' no-ext'}" for ext, files in file_types.items()])
+            lines.append(f"  File types: {type_summary}")
+
+        lines.append("")  # Blank line
+
+        # Process staged and unstaged changes with better organization
         if all_changes:
-            lines.append("Modified/Added/Deleted files:")
-            for change in all_changes[:self.config.max_context_files]:
+            lines.append("File changes with diffs:")
+            for i, change in enumerate(all_changes[:self.config.max_context_files]):
+                if i > 0:
+                    lines.append("")  # Separator between files
+
                 relative_path = change.path.relative_to(detector.repo_path)
-                lines.append(f"  {change.status.value} {relative_path}")
+                status_symbol = {
+                    "MODIFIED": "M",
+                    "ADDED": "A",
+                    "DELETED": "D",
+                    "RENAMED": "R",
+                }.get(change.status.value, "?")
+
+                lines.append(f"[{status_symbol}] {relative_path}")
 
                 # Add diff for modified/added files (truncated)
                 if change.diff and len(change.diff) > 0:
                     diff_lines = change.diff.split('\n')[:self.config.max_diff_lines]
-                    lines.append("    " + "\n    ".join(diff_lines))
+                    # Add indentation for readability
+                    formatted_diff = "\n".join(f"  {line}" for line in diff_lines)
+                    lines.append(formatted_diff)
 
-        # Add untracked files
+                    # Indicate if truncated
+                    full_diff_lines = len(change.diff.split('\n'))
+                    if full_diff_lines > self.config.max_diff_lines:
+                        lines.append(f"  ... ({full_diff_lines - self.config.max_diff_lines} more lines)")
+
+        # Add untracked files with better formatting
         if changeset.untracked_files:
-            lines.append("\nUntracked files:")
+            lines.append("\nNew untracked files:")
             for path in changeset.untracked_files[:self.config.max_context_files]:
                 relative_path = path.relative_to(detector.repo_path)
-                lines.append(f"  ?? {relative_path}")
+                lines.append(f"  [NEW] {relative_path}")
+
+            if len(changeset.untracked_files) > self.config.max_context_files:
+                remaining = len(changeset.untracked_files) - self.config.max_context_files
+                lines.append(f"  ... and {remaining} more files")
 
         return "\n".join(lines)
 
