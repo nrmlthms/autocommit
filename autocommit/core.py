@@ -75,6 +75,9 @@ class AutoCommit:
         message: Optional[str] = None,
         push: bool = True,
         dry_run: bool = False,
+        preview: bool = False,
+        amend: bool = False,
+        scope: Optional[str] = None,
         verbose: bool = False,
         safe_mode: bool = False,
     ) -> int:
@@ -85,6 +88,9 @@ class AutoCommit:
             message: Custom commit message (if None, auto-generate with LLM)
             push: Whether to push after commit
             dry_run: Show what would be done without actually doing it
+            preview: Preview changes and message without committing
+            amend: Amend the last commit instead of creating a new one
+            scope: Scope for conventional commit (e.g., 'auth' for feat(auth): ...)
             verbose: Show detailed output
             safe_mode: Create backup branch and enable rollback on push failure
 
@@ -130,7 +136,25 @@ class AutoCommit:
                 return 0
 
             # Display changes
-            self._display_changes(changeset, verbose)
+            self._display_changes(changeset, verbose or preview)
+
+            # Preview mode: show changes and generate message, then exit
+            if preview:
+                console.print("\n[bold cyan][PREVIEW][/bold cyan] Changes that would be committed:")
+                # Generate message to preview
+                if message:
+                    preview_message = message
+                else:
+                    preview_message = self.message_generator.generate_from_changeset(
+                        changeset, self.detector
+                    )
+                if scope:
+                    preview_message = self._apply_scope(preview_message, scope)
+                console.print(f"\n[bold]Generated commit message:[/bold] {preview_message}")
+                if amend:
+                    console.print("\n[dim]Would amend the last commit[/dim]")
+                console.print("\n[dim]No changes were made. Use without --preview to commit.[/dim]")
+                return 0
 
             # Stage all changes
             if dry_run:
@@ -155,6 +179,10 @@ class AutoCommit:
                     changeset, self.detector
                 )
                 use_interactive = self.config.interactive_mode and not dry_run
+
+            # Apply scope to commit message if provided
+            if scope:
+                commit_message = self._apply_scope(commit_message, scope)
 
             # Interactive review (if enabled and message was auto-generated)
             if use_interactive:
@@ -187,17 +215,18 @@ class AutoCommit:
             # Commit
             commit_sha = None
             if dry_run:
-                console.print("[bold cyan][DRY RUN][/bold cyan] Would create commit")
+                action = "amend last commit" if amend else "create commit"
+                console.print(f"[bold cyan][DRY RUN][/bold cyan] Would {action}")
             else:
                 try:
+                    status_msg = "[cyan]Amending commit...[/cyan]" if amend else "[cyan]Creating commit...[/cyan]"
                     if self.config.show_progress:
-                        with console.status(
-                            "[cyan]Creating commit...[/cyan]", spinner="dots"
-                        ):
-                            commit_sha = self._commit(commit_message)
+                        with console.status(status_msg, spinner="dots"):
+                            commit_sha = self._commit(commit_message, amend=amend)
                     else:
-                        commit_sha = self._commit(commit_message)
-                    display_success(f"Committed: {commit_message}")
+                        commit_sha = self._commit(commit_message, amend=amend)
+                    action_word = "Amended" if amend else "Committed"
+                    display_success(f"{action_word}: {commit_message}")
                 except subprocess.CalledProcessError as e:
                     raise CommitFailedError(
                         message=str(e),
@@ -343,9 +372,13 @@ class AutoCommit:
 
         return message
 
-    def _commit(self, message: str) -> str:
+    def _commit(self, message: str, amend: bool = False) -> str:
         """
         Create a git commit.
+
+        Args:
+            message: The commit message
+            amend: If True, amend the last commit instead of creating a new one
 
         Returns:
             The commit SHA
@@ -353,10 +386,16 @@ class AutoCommit:
         # Validate and sanitize the commit message
         sanitized_message = self._validate_commit_message(message)
 
+        # Build commit command
+        cmd = ["git", "-C", str(self.repo_path), "commit"]
+        if amend:
+            cmd.append("--amend")
+        cmd.extend(["-m", sanitized_message])
+
         # Note: Using subprocess.run with a list of args (not shell=True) is safe
         # from shell injection - args are passed directly to git without shell interpretation
         result = subprocess.run(
-            ["git", "-C", str(self.repo_path), "commit", "-m", sanitized_message],
+            cmd,
             capture_output=True,
             text=True,
             check=True,
@@ -457,3 +496,27 @@ class AutoCommit:
             text=True,
             check=True,
         )
+
+    def _apply_scope(self, message: str, scope: str) -> str:
+        """
+        Apply a scope to a conventional commit message.
+
+        Args:
+            message: The commit message (e.g., 'feat: add login')
+            scope: The scope to add (e.g., 'auth')
+
+        Returns:
+            Message with scope applied (e.g., 'feat(auth): add login')
+        """
+        # Match conventional commit pattern: type: description
+        # or type(existing_scope): description
+        pattern = r'^(\w+)(\([^)]+\))?:\s*(.*)$'
+        match = re.match(pattern, message, re.DOTALL)
+
+        if match:
+            commit_type = match.group(1)
+            description = match.group(3)
+            return f"{commit_type}({scope}): {description}"
+        else:
+            # If not a conventional commit format, just return original
+            return message

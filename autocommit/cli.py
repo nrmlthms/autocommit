@@ -45,6 +45,23 @@ def commit_cmd(
         "--dry-run",
         help="Show what would be done without actually doing it",
     ),
+    preview: bool = typer.Option(
+        False,
+        "--preview",
+        "-p",
+        help="Preview changes and generated message without committing",
+    ),
+    amend: bool = typer.Option(
+        False,
+        "--amend",
+        help="Amend the last commit instead of creating a new one",
+    ),
+    scope: Optional[str] = typer.Option(
+        None,
+        "--scope",
+        "-s",
+        help="Scope for conventional commit (e.g., 'auth' for feat(auth): ...)",
+    ),
     verbose: bool = typer.Option(
         False,
         "--verbose",
@@ -83,6 +100,9 @@ def commit_cmd(
         lazycommit commit --no-push          # Commit without pushing
         lazycommit commit -m "Fix bug"       # Use custom commit message
         lazycommit commit --dry-run          # See what would be done
+        lazycommit commit --preview          # Preview changes without committing
+        lazycommit commit --amend            # Amend the last commit
+        lazycommit commit --scope auth       # Add scope: feat(auth): ...
         lazycommit commit -v                 # Verbose output
         lazycommit commit --safe-mode        # Create backup branch
     """
@@ -123,6 +143,9 @@ def commit_cmd(
             message=message,
             push=push,
             dry_run=dry_run,
+            preview=preview,
+            amend=amend,
+            scope=scope,
             verbose=verbose_enabled,
             safe_mode=safe_mode_enabled,
         )

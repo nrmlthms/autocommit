@@ -1,0 +1,8 @@
+- id: lazycommit
+  name: LazyCommit
+  description: Generate AI-powered commit messages
+  entry: lazycommit commit --no-push
+  language: python
+  stages: [prepare-commit-msg]
+  pass_filenames: false
+  always_run: true

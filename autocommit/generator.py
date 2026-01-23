@@ -1,8 +1,9 @@
 """Commit message generation using LLM."""
 
 import os
+import subprocess
 import sys
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 from openai import OpenAI
 from rich.console import Console
@@ -127,7 +128,7 @@ class LLMCommitMessageGenerator:
         return len(text) // 4 + 1
 
     def generate_from_changeset(
-        self, changeset: ChangeSet, detector: ChangeDetector
+        self, changeset: ChangeSet, detector: ChangeDetector, learn_style: bool = True
     ) -> str:
         """
         Generate a commit message using LLM based on the changeset.
@@ -135,6 +136,7 @@ class LLMCommitMessageGenerator:
         Args:
             changeset: The detected changes
             detector: ChangeDetector instance for getting diffs
+            learn_style: Whether to analyze recent commits to learn user's style
 
         Returns:
             Generated commit message
@@ -157,6 +159,12 @@ class LLMCommitMessageGenerator:
 
         # Build context for LLM
         context = self._build_context(changeset, detector)
+
+        # Analyze commit history to learn user's style
+        style_context = ""
+        if learn_style:
+            history = self.get_commit_history(str(detector.repo_path))
+            style_context = self.analyze_commit_style(history)
 
         # Estimate token count before API call
         system_message = """You are an expert at writing clear, professional commit messages following the Conventional Commits specification.
@@ -231,7 +239,7 @@ If the changes are too complex to summarize in one commit, focus on the primary 
 
         user_message = f"""Analyze these git changes and generate a commit message:
 
-{context}
+{context}{style_context}
 
 Remember:
 - Use conventional commits format
@@ -443,3 +451,103 @@ Remember:
         if total == 1:
             return "chore: update file"
         return f"chore: update {total} files"
+
+    def get_commit_history(
+        self, repo_path: str, limit: int = 20
+    ) -> List[str]:
+        """
+        Get recent commit messages from the repository.
+
+        Args:
+            repo_path: Path to the git repository
+            limit: Maximum number of commits to retrieve
+
+        Returns:
+            List of recent commit messages
+        """
+        try:
+            result = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    repo_path,
+                    "log",
+                    f"-{limit}",
+                    "--pretty=format:%s",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            messages = [
+                line.strip()
+                for line in result.stdout.strip().split("\n")
+                if line.strip()
+            ]
+            return messages
+        except subprocess.CalledProcessError:
+            return []
+
+    def analyze_commit_style(self, messages: List[str]) -> str:
+        """
+        Analyze commit messages to determine the user's style.
+
+        Args:
+            messages: List of recent commit messages
+
+        Returns:
+            A summary of the user's commit style for the LLM
+        """
+        if not messages:
+            return ""
+
+        # Analyze patterns
+        uses_conventional = 0
+        uses_emoji = 0
+        common_types: dict[str, int] = {}
+        avg_length = 0
+
+        for msg in messages:
+            avg_length += len(msg)
+
+            # Check for conventional commits pattern
+            if any(
+                msg.startswith(f"{t}:")
+                or msg.startswith(f"{t}(")
+                for t in ["feat", "fix", "docs", "style", "refactor", "test", "chore", "perf", "ci", "build"]
+            ):
+                uses_conventional += 1
+                # Extract type
+                commit_type = msg.split(":")[0].split("(")[0]
+                common_types[commit_type] = common_types.get(commit_type, 0) + 1
+
+            # Check for emoji usage
+            if any(ord(c) > 127 for c in msg[:5]):
+                uses_emoji += 1
+
+        avg_length = avg_length // len(messages) if messages else 0
+        conventional_ratio = uses_conventional / len(messages) if messages else 0
+        emoji_ratio = uses_emoji / len(messages) if messages else 0
+
+        # Build style summary
+        style_notes = []
+
+        if conventional_ratio > 0.5:
+            style_notes.append("User follows conventional commits format")
+            if common_types:
+                top_types = sorted(common_types.items(), key=lambda x: -x[1])[:3]
+                types_str = ", ".join([f"{t}" for t, _ in top_types])
+                style_notes.append(f"Commonly used types: {types_str}")
+
+        if emoji_ratio > 0.3:
+            style_notes.append("User often includes emojis in commit messages")
+
+        if avg_length < 50:
+            style_notes.append("User prefers short, concise commit messages")
+        elif avg_length > 100:
+            style_notes.append("User often writes detailed commit messages")
+
+        if style_notes:
+            return "\n\nUser's commit style (based on recent history):\n- " + "\n- ".join(style_notes)
+
+        return ""

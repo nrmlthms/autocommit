@@ -261,6 +261,10 @@ class ChangeDetector:
         """Unstage a file."""
         self._run_git_command(["reset", "HEAD", str(file_path)])
 
+    def unstage_all(self) -> None:
+        """Unstage all staged changes."""
+        self._run_git_command(["reset", "HEAD"])
+
     def get_modified_files(self, since: Optional[str] = None) -> Set[Path]:
         """
         Get list of modified files.
