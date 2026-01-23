@@ -132,7 +132,9 @@ class ChangeDetector:
                 continue
 
             status_code = parts[0]
-            status = self._parse_status(status_code[0])  # First char is the status (R100 -> R)
+            status = self._parse_status(
+                status_code[0]
+            )  # First char is the status (R100 -> R)
 
             # Handle renamed files: R<percentage>\told_path\tnew_path
             if status == FileStatus.RENAMED and len(parts) >= 3:
@@ -165,7 +167,9 @@ class ChangeDetector:
                 continue
 
             status_code = parts[0]
-            status = self._parse_status(status_code[0])  # First char is the status (R100 -> R)
+            status = self._parse_status(
+                status_code[0]
+            )  # First char is the status (R100 -> R)
 
             # Handle renamed files: R<percentage>\told_path\tnew_path
             if status == FileStatus.RENAMED and len(parts) >= 3:

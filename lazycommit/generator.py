@@ -382,11 +382,12 @@ Remember:
         # Check if last line seems incomplete (ends mid-word or with incomplete bullet)
         truncation_indicators = [
             last_line.endswith("- "),  # Incomplete bullet point
-            last_line.endswith("-"),   # Cut off hyphen
+            last_line.endswith("-"),  # Cut off hyphen
             last_line.endswith("for"),  # Cut off mid-phrase
-            last_line and last_line[-1] not in ".!?)'\""  # Doesn't end with punctuation
+            last_line
+            and last_line[-1] not in ".!?)'\""  # Doesn't end with punctuation
             and len(last_line.split()) > 3  # But is substantial enough to need it
-            and not last_line.startswith("- ")  # And is not a bullet point
+            and not last_line.startswith("- "),  # And is not a bullet point
         ]
 
         if any(truncation_indicators):
