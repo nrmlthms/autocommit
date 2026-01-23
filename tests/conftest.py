@@ -10,7 +10,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import all fixtures from git_scenarios
-from tests.fixtures.git_scenarios import (
+from tests.fixtures.git_scenarios import (  # noqa: E402
     empty_git_repo,
     git_repo_with_commits,
     git_repo_with_gitignore,

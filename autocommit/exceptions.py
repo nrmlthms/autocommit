@@ -149,7 +149,7 @@ class ConfigurationError(AutoCommitError):
             config_key: The configuration key that caused the error
         """
         suggestion = (
-            f"Check your configuration file (~/.lazycommitrc) or environment variables"
+            "Check your configuration file (~/.lazycommitrc) or environment variables"
         )
         if config_key:
             suggestion += f" for the '{config_key}' setting"

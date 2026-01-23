@@ -203,8 +203,6 @@ class TestCreateDefaultConfigFile:
     def test_create_default_config_file(self) -> None:
         """Test creating default config file."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_file = Path(tmpdir) / ".lazycommitrc"
-
             # Mock the home directory
             original_home = Path.home
 

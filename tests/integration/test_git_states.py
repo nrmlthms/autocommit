@@ -9,7 +9,6 @@ import pytest
 
 from autocommit import AutoCommit
 from autocommit.config import Config
-from autocommit.exceptions import GitStateError
 
 
 @pytest.fixture

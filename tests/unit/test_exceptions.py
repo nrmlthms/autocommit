@@ -1,6 +1,5 @@
 """Unit tests for custom exceptions."""
 
-import pytest
 
 from autocommit.exceptions import (
     APIError,

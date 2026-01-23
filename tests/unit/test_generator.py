@@ -1,6 +1,5 @@
 """Unit tests for LLMCommitMessageGenerator class."""
 
-import sys
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -39,7 +38,7 @@ class TestLLMCommitMessageGenerator:
         config = Config(base_url="https://api.openrouter.ai/v1")
 
         with patch("autocommit.generator.OpenAI") as mock_openai:
-            gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
+            LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             # Verify OpenAI was called with base_url
             mock_openai.assert_called_once()
@@ -100,7 +99,7 @@ class TestLLMCommitMessageGenerator:
         config = Config(temperature=0.7, max_tokens=5000)
 
         with patch("autocommit.generator.OpenAI"):
-            gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
+            LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             captured = capsys.readouterr()
             assert "⚠" in captured.err
@@ -306,7 +305,7 @@ class TestLLMCommitMessageGenerator:
             mock_detector = MagicMock()
             mock_detector.repo_path = Path("/test")
 
-            message = gen.generate_from_changeset(changeset, mock_detector)
+            gen.generate_from_changeset(changeset, mock_detector)
 
             captured = capsys.readouterr()
             assert "⚠" in captured.err

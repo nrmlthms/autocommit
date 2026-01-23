@@ -2,7 +2,7 @@
 
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Union
 
@@ -75,7 +75,7 @@ class Config:
                 with open(config_file, "r") as f:
                     file_config = json.load(f)
                     config._apply_dict(file_config)
-            except (json.JSONDecodeError, IOError) as e:
+            except (json.JSONDecodeError, IOError):
                 # Silently ignore config file errors, use defaults
                 pass
 
@@ -90,7 +90,7 @@ class Config:
             if hasattr(self, key):
                 # Type validation
                 expected_type = type(getattr(self, key))
-                if expected_type == type(None):
+                if expected_type is type(None):
                     # For Optional fields, just set the value
                     setattr(self, key, value)
                 elif isinstance(value, expected_type):

@@ -7,7 +7,6 @@ from typing import Callable, List, Optional
 
 from openai import OpenAI
 from rich.console import Console
-from rich.status import Status
 
 from .cache import CommitMessageCache
 from .config import Config
@@ -299,14 +298,10 @@ Remember:
             return message_str
 
         except Exception as e:
-            # Wrap API errors
-            api_error = APIError(
-                message=f"LLM generation failed: {str(e)}",
-                original_error=e,
-            )
+            # Log API errors and use fallback
             from .errors import print_warning
 
-            print_warning(f"LLM generation failed. Using fallback message.")
+            print_warning(f"LLM generation failed: {e}. Using fallback message.")
             if hasattr(e, "__class__"):
                 print(f"  Error type: {e.__class__.__name__}", file=sys.stderr)
             return self._fallback_message(changeset)
@@ -384,7 +379,7 @@ Remember:
         lines = []
 
         # Add file changes summary with types
-        lines.append(f"Repository changes summary:")
+        lines.append("Repository changes summary:")
         lines.append(f"  Total files: {changeset.total_changes}")
 
         # Categorize files by type for better scope understanding

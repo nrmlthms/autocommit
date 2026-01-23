@@ -8,12 +8,11 @@ from typing import Optional
 
 from .config import Config
 from .detector import ChangeDetector, ChangeSet
-from .errors import print_error, print_success, print_warning
+from .errors import print_error
 from .exceptions import (
     AutoCommitError,
     CommitFailedError,
     GitStateError,
-    NoChangesError,
     PushFailedError,
     ValidationError,
 )
@@ -23,7 +22,6 @@ from .prompts import (
     console,
     display_changes_summary,
     display_file_list,
-    display_info,
     display_status,
     display_success,
     display_warning,

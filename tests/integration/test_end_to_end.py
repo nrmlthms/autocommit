@@ -8,12 +8,6 @@ import pytest
 
 from autocommit.config import Config
 from autocommit.core import AutoCommit
-from tests.fixtures.git_scenarios import (
-    git_repo_with_commits,
-    git_repo_with_mixed_changes,
-    git_repo_with_staged_changes,
-    git_repo_with_untracked_files,
-)
 
 
 class TestEndToEndWorkflows:
@@ -183,13 +177,12 @@ class TestEndToEndWorkflows:
             )
 
             # Get initial branches
-            result_before = subprocess.run(
+            subprocess.run(
                 ["git", "branch"],
                 cwd=git_repo_with_commits,
                 capture_output=True,
                 text=True,
             )
-            branches_before = result_before.stdout
 
             # Run with safe mode (no push)
             exit_code = autocommit.run(

@@ -4,7 +4,6 @@
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -313,7 +312,7 @@ def config_cmd(
     elif reset:
         if config_file.exists():
             config_file.unlink()
-            console.print(f"[green]✓[/green] Configuration reset to defaults")
+            console.print("[green]✓[/green] Configuration reset to defaults")
         else:
             console.print("[yellow]No config file to reset[/yellow]")
 
@@ -524,7 +523,7 @@ def undo_cmd(
             check=True,
         )
 
-        console.print(f"[green]✓[/green] Successfully undone last commit")
+        console.print("[green]✓[/green] Successfully undone last commit")
         if not hard:
             console.print("[dim]Changes are still staged. Use 'git status' to see them.[/dim]")
 

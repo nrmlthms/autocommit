@@ -1,11 +1,9 @@
 """Error formatting and display utilities using Rich."""
 
 import sys
-from typing import Any, Optional, TextIO
+from typing import Optional, TextIO
 
 from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
 
 from .exceptions import AutoCommitError
 
