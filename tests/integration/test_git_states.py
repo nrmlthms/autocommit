@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from autocommit import AutoCommit
-from autocommit.config import Config
+from lazycommit import AutoCommit
+from lazycommit.config import Config
 
 
 @pytest.fixture
@@ -70,7 +70,7 @@ class TestAutoCommitGitStates:
         test_file.write_text("new content")
 
         # Mock OpenAI API
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_client = MagicMock()
             mock_response = MagicMock()
             mock_response.choices = [MagicMock()]
@@ -116,7 +116,7 @@ class TestAutoCommitGitStates:
         test_file.write_text("new content")
 
         # Mock OpenAI API
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_client = MagicMock()
             mock_response = MagicMock()
             mock_response.choices = [MagicMock()]
@@ -319,7 +319,7 @@ class TestAutoCommitGitStates:
         test_file.write_text("new content")
 
         # Mock OpenAI API
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_client = MagicMock()
             mock_response = MagicMock()
             mock_response.choices = [MagicMock()]

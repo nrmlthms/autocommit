@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from autocommit.git_state import GitState, GitStateDetector, RepositoryState
+from lazycommit.git_state import GitState, GitStateDetector, RepositoryState
 
 
 @pytest.fixture

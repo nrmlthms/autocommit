@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from autocommit.config import Config
-from autocommit.core import AutoCommit
+from lazycommit.config import Config
+from lazycommit.core import AutoCommit
 
 
 class TestEndToEndWorkflows:
@@ -25,7 +25,7 @@ class TestEndToEndWorkflows:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             autocommit = AutoCommit(
@@ -59,7 +59,7 @@ class TestEndToEndWorkflows:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             autocommit = AutoCommit(
@@ -92,7 +92,7 @@ class TestEndToEndWorkflows:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             autocommit = AutoCommit(
@@ -118,7 +118,7 @@ class TestEndToEndWorkflows:
         """Test dry run doesn't make actual changes."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             autocommit = AutoCommit(
                 config=config,
                 repo_path=str(git_repo_with_untracked_files),
@@ -159,7 +159,7 @@ class TestEndToEndWorkflows:
         # Create a change
         (git_repo_with_commits / "test.txt").write_text("Test content\n")
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             autocommit = AutoCommit(
                 config=config,
                 repo_path=str(git_repo_with_commits),
@@ -210,7 +210,7 @@ class TestEndToEndWorkflows:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             autocommit = AutoCommit(
@@ -233,7 +233,7 @@ class TestEndToEndWorkflows:
         """Test workflow with custom commit message (no LLM)."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             autocommit = AutoCommit(
                 config=config,
                 repo_path=str(git_repo_with_untracked_files),
@@ -267,7 +267,7 @@ class TestEndToEndWorkflows:
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = Exception("API Error")
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             autocommit = AutoCommit(

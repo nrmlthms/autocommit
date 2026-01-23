@@ -14,7 +14,7 @@ class Config:
     # LLM Settings
     model: str = "gpt-4o-mini"
     temperature: float = 0.7
-    max_tokens: int = 100
+    max_tokens: int = 400  # Increased for commit messages with body and bullet points
     api_key: Optional[str] = None
     base_url: Optional[str] = None  # For OpenRouter or custom API endpoints
 

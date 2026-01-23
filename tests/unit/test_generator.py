@@ -6,10 +6,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from autocommit.config import Config
-from autocommit.detector import ChangeSet, FileChange, FileStatus
-from autocommit.exceptions import ConfigurationError, ValidationError
-from autocommit.generator import LLMCommitMessageGenerator
+from lazycommit.config import Config
+from lazycommit.detector import ChangeSet, FileChange, FileStatus
+from lazycommit.exceptions import ConfigurationError, ValidationError
+from lazycommit.generator import LLMCommitMessageGenerator
 
 
 class TestLLMCommitMessageGenerator:
@@ -19,7 +19,7 @@ class TestLLMCommitMessageGenerator:
         """Test initialization with config."""
         config = Config(model="gpt-4", temperature=0.5, max_tokens=100)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             assert gen.config == config
@@ -37,7 +37,7 @@ class TestLLMCommitMessageGenerator:
         """Test initialization with custom base URL."""
         config = Config(base_url="https://api.openrouter.ai/v1")
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             # Verify OpenAI was called with base_url
@@ -49,7 +49,7 @@ class TestLLMCommitMessageGenerator:
         """Test validation with valid config."""
         config = Config(temperature=0.7, max_tokens=100, max_message_length=500)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             # Should not raise
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
             assert gen.config.temperature == 0.7
@@ -58,7 +58,7 @@ class TestLLMCommitMessageGenerator:
         """Test validation rejects temperature too low."""
         config = Config(temperature=-0.1, max_tokens=100)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             with pytest.raises(ValidationError, match="Temperature must be between"):
                 LLMCommitMessageGenerator(config=config, api_key="test-key")
 
@@ -66,7 +66,7 @@ class TestLLMCommitMessageGenerator:
         """Test validation rejects temperature too high."""
         config = Config(temperature=2.5, max_tokens=100)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             with pytest.raises(ValidationError, match="Temperature must be between"):
                 LLMCommitMessageGenerator(config=config, api_key="test-key")
 
@@ -74,7 +74,7 @@ class TestLLMCommitMessageGenerator:
         """Test validation rejects max_tokens of zero."""
         config = Config(temperature=0.7, max_tokens=0)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             with pytest.raises(ValidationError, match="max_tokens must be positive"):
                 LLMCommitMessageGenerator(config=config, api_key="test-key")
 
@@ -82,7 +82,7 @@ class TestLLMCommitMessageGenerator:
         """Test validation rejects negative max_tokens."""
         config = Config(temperature=0.7, max_tokens=-100)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             with pytest.raises(ValidationError, match="max_tokens must be positive"):
                 LLMCommitMessageGenerator(config=config, api_key="test-key")
 
@@ -90,7 +90,7 @@ class TestLLMCommitMessageGenerator:
         """Test validation rejects invalid max_message_length."""
         config = Config(temperature=0.7, max_tokens=100, max_message_length=0)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             with pytest.raises(
                 ValidationError, match="max_message_length must be positive"
             ):
@@ -100,7 +100,7 @@ class TestLLMCommitMessageGenerator:
         """Test warning for unusually high max_tokens."""
         config = Config(temperature=0.7, max_tokens=5000)
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             captured = capsys.readouterr()
@@ -111,7 +111,7 @@ class TestLLMCommitMessageGenerator:
         """Test token count estimation."""
         config = Config()
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             # Test various text lengths
@@ -125,7 +125,7 @@ class TestLLMCommitMessageGenerator:
         config = Config()
         changeset = ChangeSet([], [], [])
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
             message = gen.generate_from_changeset(changeset, MagicMock())
 
@@ -155,7 +155,7 @@ class TestLLMCommitMessageGenerator:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
@@ -191,7 +191,7 @@ class TestLLMCommitMessageGenerator:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
@@ -226,7 +226,7 @@ class TestLLMCommitMessageGenerator:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
@@ -257,7 +257,7 @@ class TestLLMCommitMessageGenerator:
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = Exception("API Error")
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
@@ -300,7 +300,7 @@ class TestLLMCommitMessageGenerator:
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
 
-        with patch("autocommit.generator.OpenAI") as mock_openai:
+        with patch("lazycommit.generator.OpenAI") as mock_openai:
             mock_openai.return_value = mock_client
 
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
@@ -335,7 +335,7 @@ class TestLLMCommitMessageGenerator:
             untracked_files=[Path("/repo/file3.py")],
         )
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             mock_detector = MagicMock()
@@ -365,7 +365,7 @@ class TestLLMCommitMessageGenerator:
             untracked_files=[],
         )
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
             message = gen._fallback_message(changeset)
 
@@ -391,7 +391,7 @@ class TestLLMCommitMessageGenerator:
             untracked_files=[Path("/test/file3.py")],
         )
 
-        with patch("autocommit.generator.OpenAI"):
+        with patch("lazycommit.generator.OpenAI"):
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
             message = gen._fallback_message(changeset)
 

@@ -5,14 +5,14 @@ from io import StringIO
 
 import pytest
 
-from autocommit.errors import (
+from lazycommit.errors import (
     Colors,
     format_error,
     print_error,
     print_success,
     print_warning,
 )
-from autocommit.exceptions import (
+from lazycommit.exceptions import (
     APIError,
     AutoCommitError,
     ConfigurationError,

@@ -1,6 +1,6 @@
 """Unit tests for custom exceptions."""
 
-from autocommit.exceptions import (
+from lazycommit.exceptions import (
     APIError,
     AutoCommitError,
     CommitFailedError,

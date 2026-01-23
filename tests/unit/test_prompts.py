@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from autocommit.prompts import (
+from lazycommit.prompts import (
     edit_in_editor,
     get_editor,
     prompt_commit_message_review,
@@ -52,8 +52,8 @@ class TestEditInEditor:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 1
-            with patch("autocommit.prompts.get_editor", return_value="false"):
-                with patch("autocommit.prompts.console"):
+            with patch("lazycommit.prompts.get_editor", return_value="false"):
+                with patch("lazycommit.prompts.console"):
                     result = edit_in_editor(initial_text)
 
         assert result is None
@@ -62,8 +62,8 @@ class TestEditInEditor:
 class TestPromptCommitMessageReview:
     """Test cases for prompt_commit_message_review function."""
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.console")
     def test_user_accepts_message(self, mock_console, mock_prompt) -> None:
         """Test user accepting the message."""
         mock_prompt.return_value = "y"
@@ -73,8 +73,8 @@ class TestPromptCommitMessageReview:
         assert action == "yes"
         assert edited is None
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.console")
     def test_user_accepts_with_yes(self, mock_console, mock_prompt) -> None:
         """Test user accepting with 'yes'."""
         mock_prompt.return_value = "yes"
@@ -84,8 +84,8 @@ class TestPromptCommitMessageReview:
         assert action == "yes"
         assert edited is None
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.console")
     def test_user_rejects_message(self, mock_console, mock_prompt) -> None:
         """Test user rejecting the message."""
         mock_prompt.return_value = "n"
@@ -95,8 +95,8 @@ class TestPromptCommitMessageReview:
         assert action == "no"
         assert edited is None
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.console")
     def test_user_rejects_with_no(self, mock_console, mock_prompt) -> None:
         """Test user rejecting with 'no'."""
         mock_prompt.return_value = "no"
@@ -106,9 +106,9 @@ class TestPromptCommitMessageReview:
         assert action == "no"
         assert edited is None
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.edit_in_editor")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.edit_in_editor")
+    @patch("lazycommit.prompts.console")
     def test_user_edits_message(self, mock_console, mock_edit, mock_prompt) -> None:
         """Test user editing the message."""
         mock_prompt.return_value = "e"
@@ -120,9 +120,9 @@ class TestPromptCommitMessageReview:
         assert edited == "feat: edited feature"
         mock_edit.assert_called_once_with("feat: add feature")
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.edit_in_editor")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.edit_in_editor")
+    @patch("lazycommit.prompts.console")
     def test_user_edits_with_edit(self, mock_console, mock_edit, mock_prompt) -> None:
         """Test user editing with 'edit'."""
         mock_prompt.return_value = "edit"
@@ -133,9 +133,9 @@ class TestPromptCommitMessageReview:
         assert action == "edit"
         assert edited == "feat: edited feature"
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.edit_in_editor")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.edit_in_editor")
+    @patch("lazycommit.prompts.console")
     def test_user_cancels_edit(self, mock_console, mock_edit, mock_prompt) -> None:
         """Test user cancelling the edit."""
         mock_prompt.return_value = "e"
@@ -146,8 +146,8 @@ class TestPromptCommitMessageReview:
         assert action == "no"
         assert edited is None
 
-    @patch("autocommit.prompts.Prompt.ask")
-    @patch("autocommit.prompts.console")
+    @patch("lazycommit.prompts.Prompt.ask")
+    @patch("lazycommit.prompts.console")
     def test_edit_disabled(self, mock_console, mock_prompt) -> None:
         """Test with editing disabled."""
         mock_prompt.return_value = "y"

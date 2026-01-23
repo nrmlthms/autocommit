@@ -7,8 +7,8 @@ from typing import Iterator
 
 import pytest
 
-from autocommit.detector import ChangeDetector, ChangeSet, FileChange, FileStatus
-from autocommit.exceptions import NotAGitRepositoryError
+from lazycommit.detector import ChangeDetector, ChangeSet, FileChange, FileStatus
+from lazycommit.exceptions import NotAGitRepositoryError
 
 
 @pytest.fixture

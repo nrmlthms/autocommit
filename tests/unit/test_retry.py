@@ -2,7 +2,7 @@
 
 import pytest
 
-from autocommit.retry import (
+from lazycommit.retry import (
     exponential_backoff,
     retry_on_api_error,
     should_retry_api_error,

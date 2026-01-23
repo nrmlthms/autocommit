@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from autocommit.config import Config, create_default_config_file
+from lazycommit.config import Config, create_default_config_file
 
 
 class TestConfig:
@@ -19,7 +19,7 @@ class TestConfig:
 
         assert config.model == "gpt-4o-mini"
         assert config.temperature == 0.7
-        assert config.max_tokens == 100
+        assert config.max_tokens == 400  # Increased for commit messages with body
         assert config.max_message_length == 500
         assert config.max_context_files == 10
         assert config.max_diff_lines == 20

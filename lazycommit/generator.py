@@ -127,7 +127,7 @@ class LLMCommitMessageGenerator:
         return len(text) // 4 + 1
 
     def generate_from_changeset(
-        self, changeset: ChangeSet, detector: ChangeDetector, learn_style: bool = True
+        self, changeset: ChangeSet, detector: ChangeDetector, learn_style: bool = False
     ) -> str:
         """
         Generate a commit message using LLM based on the changeset.
@@ -168,10 +168,12 @@ class LLMCommitMessageGenerator:
         # Estimate token count before API call
         system_message = """You are an expert at writing clear, professional commit messages following the Conventional Commits specification.
 
-Your task is to analyze git diffs and create commit messages that are:
+Your task is to analyze CURRENT git changes (not commit history) and create ONE commit message that is:
 - Clear and descriptive
-- Follow best practices
+- Follows best practices
 - Easy to understand at a glance
+
+CRITICAL: You are writing ONE commit message for the CURRENT uncommitted changes only. Do NOT try to summarize multiple commits or reference past commits.
 
 RULES:
 1. Format: <type>(<scope>): <description>
@@ -233,19 +235,27 @@ update files (no type, unclear)
 Fixed the thing that was broken (past tense, unclear)
 
 OUTPUT FORMAT:
-Return ONLY the commit message, nothing else. No explanations, no quotes, no markdown formatting.
-If the changes are too complex to summarize in one commit, focus on the primary change."""
+Return ONLY ONE commit message for the CURRENT changes, nothing else.
+- No explanations, no quotes, no markdown formatting
+- Do NOT generate multiple commit messages
+- Do NOT describe past commits or commit history
+- Focus on what is being changed RIGHT NOW in this commit
+If the changes are too complex to summarize in one commit, focus on the primary/most significant change."""
 
-        user_message = f"""Analyze these git changes and generate a commit message:
+        user_message = f"""Analyze these CURRENT UNCOMMITTED changes and generate ONE commit message:
 
 {context}{style_context}
+
+IMPORTANT: Generate ONE commit message for these current changes ONLY.
+Do NOT describe multiple separate commits or reference commit history.
 
 Remember:
 - Use conventional commits format
 - Subject line under 72 characters
 - Focus on WHAT and WHY, not HOW
 - Be specific and actionable
-- Use imperative mood"""
+- Use imperative mood
+- Generate ONLY ONE commit message"""
 
         # Estimate tokens for cost awareness
         estimated_input_tokens = self._estimate_token_count(
@@ -339,7 +349,52 @@ Remember:
         # Clean up message
         message_str: str = message.strip()
         message_str = message_str.strip("\"'")
+
+        # Check for truncation (incomplete output)
+        self._check_truncation(message_str, response)
+
         return message_str
+
+    def _check_truncation(self, message: str, response: Any) -> None:
+        """
+        Check if the generated message appears to be truncated.
+
+        Args:
+            message: Generated message text
+            response: API response object
+        """
+        from .errors import print_warning
+
+        # Check if finish_reason indicates truncation
+        finish_reason = response.choices[0].finish_reason
+        if finish_reason == "length":
+            print_warning(
+                f"⚠️  Generated commit message was truncated due to max_tokens limit ({self.config.max_tokens}).\n"
+                f"   Consider increasing max_tokens in your config file (~/.lazycommitrc).\n"
+                f"   Recommended: max_tokens=400 or higher for messages with bullet points."
+            )
+            return
+
+        # Check for common truncation patterns
+        lines = message.split("\n")
+        last_line = lines[-1].strip() if lines else ""
+
+        # Check if last line seems incomplete (ends mid-word or with incomplete bullet)
+        truncation_indicators = [
+            last_line.endswith("- "),  # Incomplete bullet point
+            last_line.endswith("-"),   # Cut off hyphen
+            last_line.endswith("for"),  # Cut off mid-phrase
+            last_line and not last_line[-1] in ".!?)'\""  # Doesn't end with punctuation
+            and len(last_line.split()) > 3  # But is substantial enough to need it
+            and not last_line.startswith("- ")  # And is not a bullet point
+        ]
+
+        if any(truncation_indicators):
+            print_warning(
+                f"⚠️  Generated commit message may be incomplete.\n"
+                f"   Last line: '{last_line}'\n"
+                f"   Consider increasing max_tokens in config (current: {self.config.max_tokens})."
+            )
 
     def _create_retryable_generate(
         self, system_message: str, user_message: str
@@ -556,9 +611,9 @@ Remember:
             style_notes.append("User often writes detailed commit messages")
 
         if style_notes:
-            return (
-                "\n\nUser's commit style (based on recent history):\n- "
-                + "\n- ".join(style_notes)
-            )
+            # Keep style notes very brief to avoid context bloat
+            # Only include the most relevant information
+            brief_notes = style_notes[:2]  # Max 2 style observations
+            return "\n\nStyle preference: " + "; ".join(brief_notes)
 
         return ""

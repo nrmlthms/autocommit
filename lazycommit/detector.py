@@ -127,12 +127,21 @@ class ChangeDetector:
             if not line:
                 continue
 
-            parts = line.split("\t", 1)
-            if len(parts) != 2:
+            parts = line.split("\t")
+            if len(parts) < 2:
                 continue
 
-            status_code, file_path = parts
-            status = self._parse_status(status_code)
+            status_code = parts[0]
+            status = self._parse_status(status_code[0])  # First char is the status (R100 -> R)
+
+            # Handle renamed files: R<percentage>\told_path\tnew_path
+            if status == FileStatus.RENAMED and len(parts) >= 3:
+                old_path = parts[1]
+                new_path = parts[2]
+                file_path = new_path  # Use new path for current reference
+            else:
+                file_path = parts[1]
+
             path = self.repo_path / file_path
 
             diff = None
@@ -152,12 +161,21 @@ class ChangeDetector:
             if not line:
                 continue
 
-            parts = line.split("\t", 1)
-            if len(parts) != 2:
+            parts = line.split("\t")
+            if len(parts) < 2:
                 continue
 
-            status_code, file_path = parts
-            status = self._parse_status(status_code)
+            status_code = parts[0]
+            status = self._parse_status(status_code[0])  # First char is the status (R100 -> R)
+
+            # Handle renamed files: R<percentage>\told_path\tnew_path
+            if status == FileStatus.RENAMED and len(parts) >= 3:
+                old_path = parts[1]
+                new_path = parts[2]
+                file_path = new_path  # Use new path for current reference
+            else:
+                file_path = parts[1]
+
             path = self.repo_path / file_path
 
             diff = None

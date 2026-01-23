@@ -19,6 +19,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Version Control :: Git",
     "Topic :: Utilities",
 ]
@@ -34,7 +35,7 @@ monitor = [
 ]
 
 [project.scripts]
-lazycommit = "autocommit.cli:main"
+lazycommit = "lazycommit.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/nrmlthms/autocommit"
@@ -42,7 +43,7 @@ Repository = "https://github.com/nrmlthms/autocommit"
 Issues = "https://github.com/nrmlthms/autocommit/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["autocommit"]
+packages = ["lazycommit"]
 
 [tool.mypy]
 python_version = "3.12"

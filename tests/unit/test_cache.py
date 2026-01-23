@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from autocommit.cache import CommitMessageCache
-from autocommit.detector import ChangeSet, FileChange, FileStatus
+from lazycommit.cache import CommitMessageCache
+from lazycommit.detector import ChangeSet, FileChange, FileStatus
 
 
 @pytest.fixture

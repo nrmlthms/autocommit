@@ -1,4 +1,8 @@
-# LazyCommit
+<div align="center">
+  <img src="assets/lazy_commit.png" alt="LazyCommit Logo" width="200">
+
+  # LazyCommit
+</div>
 
 I got tired of writing commit messages. So I vibe coded this to let AI do it for me.
 

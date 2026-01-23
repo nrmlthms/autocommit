@@ -8,10 +8,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from autocommit.config import Config
-from autocommit.core import AutoCommit
-from autocommit.detector import ChangeSet, FileChange, FileStatus
-from autocommit.exceptions import ValidationError
+from lazycommit.config import Config
+from lazycommit.core import AutoCommit
+from lazycommit.detector import ChangeSet, FileChange, FileStatus
+from lazycommit.exceptions import ValidationError
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ class TestAutoCommit:
         """Test initialization with config."""
         config = Config(model="gpt-4", temperature=0.5)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -67,10 +67,10 @@ class TestAutoCommit:
 
     def test_init_without_config(self, temp_git_repo: Path) -> None:
         """Test initialization without config loads defaults."""
-        with patch("autocommit.core.Config.load") as mock_load:
+        with patch("lazycommit.core.Config.load") as mock_load:
             mock_load.return_value = Config()
 
-            with patch("autocommit.core.LLMCommitMessageGenerator"):
+            with patch("lazycommit.core.LLMCommitMessageGenerator"):
                 autocommit = AutoCommit(
                     repo_path=str(temp_git_repo), api_key="test-key"
                 )
@@ -84,7 +84,7 @@ class TestAutoCommit:
         """Test run with no changes."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -104,7 +104,7 @@ class TestAutoCommit:
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -126,7 +126,7 @@ class TestAutoCommit:
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -152,7 +152,7 @@ class TestAutoCommit:
         mock_generator = MagicMock()
         mock_generator.generate_from_changeset.return_value = "feat: add test file"
 
-        with patch("autocommit.core.LLMCommitMessageGenerator") as mock_gen_class:
+        with patch("lazycommit.core.LLMCommitMessageGenerator") as mock_gen_class:
             mock_gen_class.return_value = mock_generator
 
             autocommit = AutoCommit(
@@ -169,7 +169,7 @@ class TestAutoCommit:
         """Test validating a valid commit message."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -185,7 +185,7 @@ class TestAutoCommit:
         """Test that commit message validation strips whitespace."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -199,7 +199,7 @@ class TestAutoCommit:
         """Test that empty commit message is rejected."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -214,7 +214,7 @@ class TestAutoCommit:
         """Test that overly long commit message is rejected."""
         config = Config(max_message_length=50)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -229,7 +229,7 @@ class TestAutoCommit:
         """Test that control characters are removed."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -263,7 +263,7 @@ class TestAutoCommit:
             untracked_files=[Path("/test/file3.py")],
         )
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -288,7 +288,7 @@ class TestAutoCommit:
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -317,7 +317,7 @@ class TestAutoCommit:
             check=True,
         )
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -331,7 +331,7 @@ class TestAutoCommit:
         """Test creating backup branch."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -353,7 +353,7 @@ class TestAutoCommit:
         """Test deleting backup branch."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
@@ -379,7 +379,7 @@ class TestAutoCommit:
         """Test push when no remote is configured."""
         config = Config(interactive_mode=False)
 
-        with patch("autocommit.core.LLMCommitMessageGenerator"):
+        with patch("lazycommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
                 config=config, repo_path=str(temp_git_repo), api_key="test-key"
             )
