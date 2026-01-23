@@ -13,7 +13,12 @@ def empty_git_repo() -> Iterator[Path]:
     """Create an empty git repository (no commits)."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
@@ -34,7 +39,12 @@ def git_repo_with_commits() -> Iterator[Path]:
     """Create a git repository with multiple commits."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
@@ -83,7 +93,12 @@ def git_repo_with_staged_changes() -> Iterator[Path]:
     """Create a git repository with staged changes."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
@@ -131,7 +146,12 @@ def git_repo_with_unstaged_changes() -> Iterator[Path]:
     """Create a git repository with unstaged changes."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
@@ -168,7 +188,12 @@ def git_repo_with_untracked_files() -> Iterator[Path]:
     """Create a git repository with untracked files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
@@ -206,7 +231,12 @@ def git_repo_with_gitignore() -> Iterator[Path]:
     """Create a git repository with .gitignore."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,
@@ -248,7 +278,12 @@ def git_repo_with_mixed_changes() -> Iterator[Path]:
     """Create a git repository with staged, unstaged, and untracked changes."""
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,

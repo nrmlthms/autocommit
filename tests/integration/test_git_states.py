@@ -17,9 +17,9 @@ def git_repo_with_commit() -> Path:
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir).resolve()
 
-        # Initialize git repo
+        # Initialize git repo with main as default branch
         subprocess.run(
-            ["git", "init"],
+            ["git", "init", "-b", "main"],
             cwd=repo_path,
             capture_output=True,
             check=True,

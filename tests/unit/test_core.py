@@ -21,7 +21,12 @@ def temp_git_repo() -> Iterator[Path]:
         repo_path = Path(tmpdir)
 
         # Initialize git repo
-        subprocess.run(["git", "init"], cwd=repo_path, capture_output=True, check=True)
+        subprocess.run(
+            ["git", "init", "-b", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            check=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@example.com"],
             cwd=repo_path,

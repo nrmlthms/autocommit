@@ -17,7 +17,7 @@ def git_repo() -> Path:
 
         # Initialize git repo
         subprocess.run(
-            ["git", "init"],
+            ["git", "init", "-b", "main"],
             cwd=repo_path,
             capture_output=True,
             check=True,
