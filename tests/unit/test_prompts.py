@@ -109,9 +109,7 @@ class TestPromptCommitMessageReview:
     @patch("autocommit.prompts.Prompt.ask")
     @patch("autocommit.prompts.edit_in_editor")
     @patch("autocommit.prompts.console")
-    def test_user_edits_message(
-        self, mock_console, mock_edit, mock_prompt
-    ) -> None:
+    def test_user_edits_message(self, mock_console, mock_edit, mock_prompt) -> None:
         """Test user editing the message."""
         mock_prompt.return_value = "e"
         mock_edit.return_value = "feat: edited feature"
@@ -125,9 +123,7 @@ class TestPromptCommitMessageReview:
     @patch("autocommit.prompts.Prompt.ask")
     @patch("autocommit.prompts.edit_in_editor")
     @patch("autocommit.prompts.console")
-    def test_user_edits_with_edit(
-        self, mock_console, mock_edit, mock_prompt
-    ) -> None:
+    def test_user_edits_with_edit(self, mock_console, mock_edit, mock_prompt) -> None:
         """Test user editing with 'edit'."""
         mock_prompt.return_value = "edit"
         mock_edit.return_value = "feat: edited feature"
@@ -140,9 +136,7 @@ class TestPromptCommitMessageReview:
     @patch("autocommit.prompts.Prompt.ask")
     @patch("autocommit.prompts.edit_in_editor")
     @patch("autocommit.prompts.console")
-    def test_user_cancels_edit(
-        self, mock_console, mock_edit, mock_prompt
-    ) -> None:
+    def test_user_cancels_edit(self, mock_console, mock_edit, mock_prompt) -> None:
         """Test user cancelling the edit."""
         mock_prompt.return_value = "e"
         mock_edit.return_value = None  # Editor returned no changes

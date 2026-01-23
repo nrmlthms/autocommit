@@ -3,7 +3,7 @@
 import os
 import subprocess
 import sys
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 from openai import OpenAI
 from rich.console import Console
@@ -248,10 +248,9 @@ Remember:
 - Use imperative mood"""
 
         # Estimate tokens for cost awareness
-        estimated_input_tokens = (
-            self._estimate_token_count(system_message) +
-            self._estimate_token_count(user_message)
-        )
+        estimated_input_tokens = self._estimate_token_count(
+            system_message
+        ) + self._estimate_token_count(user_message)
         estimated_output_tokens = self.config.max_tokens
         estimated_total_tokens = estimated_input_tokens + estimated_output_tokens
 
@@ -287,7 +286,7 @@ Remember:
                     generate_fn = self._create_retryable_generate(
                         system_message, user_message
                     )
-                    message_str: str = generate_fn()
+                    message_str = generate_fn()
                 else:
                     message_str = self._call_api(system_message, user_message)
 
@@ -339,7 +338,7 @@ Remember:
 
         # Clean up message
         message_str: str = message.strip()
-        message_str = message_str.strip('"\'')
+        message_str = message_str.strip("\"'")
         return message_str
 
     def _create_retryable_generate(
@@ -383,7 +382,7 @@ Remember:
         lines.append(f"  Total files: {changeset.total_changes}")
 
         # Categorize files by type for better scope understanding
-        file_types = {}
+        file_types: dict[str, list[Any]] = {}
         all_changes = changeset.staged_changes + changeset.unstaged_changes
 
         for change in all_changes:
@@ -393,7 +392,9 @@ Remember:
             file_types[ext].append(change)
 
         if file_types:
-            type_summary = ", ".join([f"{len(files)}{ext or ' no-ext'}" for ext, files in file_types.items()])
+            type_summary = ", ".join(
+                [f"{len(files)}{ext or ' no-ext'}" for ext, files in file_types.items()]
+            )
             lines.append(f"  File types: {type_summary}")
 
         lines.append("")  # Blank line
@@ -401,7 +402,7 @@ Remember:
         # Process staged and unstaged changes with better organization
         if all_changes:
             lines.append("File changes with diffs:")
-            for i, change in enumerate(all_changes[:self.config.max_context_files]):
+            for i, change in enumerate(all_changes[: self.config.max_context_files]):
                 if i > 0:
                     lines.append("")  # Separator between files
 
@@ -417,25 +418,29 @@ Remember:
 
                 # Add diff for modified/added files (truncated)
                 if change.diff and len(change.diff) > 0:
-                    diff_lines = change.diff.split('\n')[:self.config.max_diff_lines]
+                    diff_lines = change.diff.split("\n")[: self.config.max_diff_lines]
                     # Add indentation for readability
                     formatted_diff = "\n".join(f"  {line}" for line in diff_lines)
                     lines.append(formatted_diff)
 
                     # Indicate if truncated
-                    full_diff_lines = len(change.diff.split('\n'))
+                    full_diff_lines = len(change.diff.split("\n"))
                     if full_diff_lines > self.config.max_diff_lines:
-                        lines.append(f"  ... ({full_diff_lines - self.config.max_diff_lines} more lines)")
+                        lines.append(
+                            f"  ... ({full_diff_lines - self.config.max_diff_lines} more lines)"
+                        )
 
         # Add untracked files with better formatting
         if changeset.untracked_files:
             lines.append("\nNew untracked files:")
-            for path in changeset.untracked_files[:self.config.max_context_files]:
+            for path in changeset.untracked_files[: self.config.max_context_files]:
                 relative_path = path.relative_to(detector.repo_path)
                 lines.append(f"  [NEW] {relative_path}")
 
             if len(changeset.untracked_files) > self.config.max_context_files:
-                remaining = len(changeset.untracked_files) - self.config.max_context_files
+                remaining = (
+                    len(changeset.untracked_files) - self.config.max_context_files
+                )
                 lines.append(f"  ... and {remaining} more files")
 
         return "\n".join(lines)
@@ -447,9 +452,7 @@ Remember:
             return "chore: update file"
         return f"chore: update {total} files"
 
-    def get_commit_history(
-        self, repo_path: str, limit: int = 20
-    ) -> List[str]:
+    def get_commit_history(self, repo_path: str, limit: int = 20) -> List[str]:
         """
         Get recent commit messages from the repository.
 
@@ -507,9 +510,19 @@ Remember:
 
             # Check for conventional commits pattern
             if any(
-                msg.startswith(f"{t}:")
-                or msg.startswith(f"{t}(")
-                for t in ["feat", "fix", "docs", "style", "refactor", "test", "chore", "perf", "ci", "build"]
+                msg.startswith(f"{t}:") or msg.startswith(f"{t}(")
+                for t in [
+                    "feat",
+                    "fix",
+                    "docs",
+                    "style",
+                    "refactor",
+                    "test",
+                    "chore",
+                    "perf",
+                    "ci",
+                    "build",
+                ]
             ):
                 uses_conventional += 1
                 # Extract type
@@ -543,6 +556,9 @@ Remember:
             style_notes.append("User often writes detailed commit messages")
 
         if style_notes:
-            return "\n\nUser's commit style (based on recent history):\n- " + "\n- ".join(style_notes)
+            return (
+                "\n\nUser's commit style (based on recent history):\n- "
+                + "\n- ".join(style_notes)
+            )
 
         return ""

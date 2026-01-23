@@ -10,6 +10,7 @@ from watchfiles import awatch, Change
 
 class ChangeType(Enum):
     """Types of file changes."""
+
     ADDED = Change.added
     MODIFIED = Change.modified
     DELETED = Change.deleted
@@ -35,21 +36,23 @@ class FileMonitor:
         self.watch_path = Path(watch_path).resolve()
         self.recursive = recursive
         self.ignore_patterns = ignore_patterns or {
-            '*.pyc',
-            '__pycache__',
-            '.git',
-            '.env',
-            '*.swp',
-            '.DS_Store',
+            "*.pyc",
+            "__pycache__",
+            ".git",
+            ".env",
+            "*.swp",
+            ".DS_Store",
         }
         self._running = False
-        self._callback: Optional[Callable[[ChangeType, Path], Union[None, Awaitable[None]]]] = None
+        self._callback: Optional[
+            Callable[[ChangeType, Path], Union[None, Awaitable[None]]]
+        ] = None
 
     def _should_ignore(self, path: Path) -> bool:
         """Check if a path should be ignored based on patterns."""
         path_str = str(path)
         for pattern in self.ignore_patterns:
-            if pattern.startswith('*'):
+            if pattern.startswith("*"):
                 if path_str.endswith(pattern[1:]):
                     return True
             elif pattern in path_str:

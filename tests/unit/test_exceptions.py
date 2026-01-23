@@ -1,6 +1,5 @@
 """Unit tests for custom exceptions."""
 
-
 from autocommit.exceptions import (
     APIError,
     AutoCommitError,
@@ -29,8 +28,7 @@ class TestAutoCommitError:
     def test_init_with_suggestion(self) -> None:
         """Test creating error with suggestion."""
         error = AutoCommitError(
-            "Something went wrong",
-            suggestion="Try running with --verbose"
+            "Something went wrong", suggestion="Try running with --verbose"
         )
 
         assert error.message == "Something went wrong"
@@ -46,7 +44,7 @@ class TestGitError:
             message="Command failed",
             command="git push",
             stderr="fatal: remote error",
-            suggestion="Check your remote configuration"
+            suggestion="Check your remote configuration",
         )
 
         assert error.message == "Command failed"
@@ -75,8 +73,7 @@ class TestGitStateError:
     def test_init_with_state(self) -> None:
         """Test creating GitStateError."""
         error = GitStateError(
-            state="merge",
-            suggestion="Resolve conflicts and complete merge"
+            state="merge", suggestion="Resolve conflicts and complete merge"
         )
 
         assert "merge" in error.message
@@ -100,10 +97,7 @@ class TestCommitFailedError:
 
     def test_init_with_stderr(self) -> None:
         """Test creating CommitFailedError with stderr."""
-        error = CommitFailedError(
-            message="Commit failed",
-            stderr="fatal: not possible"
-        )
+        error = CommitFailedError(message="Commit failed", stderr="fatal: not possible")
 
         assert "Failed to create commit" in error.message
         assert error.stderr == "fatal: not possible"
@@ -130,10 +124,7 @@ class TestAPIError:
     def test_init_with_original_error(self) -> None:
         """Test creating APIError with original exception."""
         original = Exception("API timeout")
-        error = APIError(
-            message="API call failed",
-            original_error=original
-        )
+        error = APIError(message="API call failed", original_error=original)
 
         assert error.message == "API call failed"
         assert error.original_error == original
@@ -146,10 +137,7 @@ class TestConfigurationError:
 
     def test_init_with_config_key(self) -> None:
         """Test creating ConfigurationError with config key."""
-        error = ConfigurationError(
-            message="Invalid value",
-            config_key="temperature"
-        )
+        error = ConfigurationError(message="Invalid value", config_key="temperature")
 
         assert error.message == "Invalid value"
         assert error.config_key == "temperature"
@@ -162,10 +150,7 @@ class TestValidationError:
 
     def test_init_with_field(self) -> None:
         """Test creating ValidationError with field."""
-        error = ValidationError(
-            message="Value out of range",
-            field="max_tokens"
-        )
+        error = ValidationError(message="Value out of range", field="max_tokens")
 
         assert error.message == "Value out of range"
         assert error.field == "max_tokens"

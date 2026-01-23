@@ -111,9 +111,7 @@ class AutoCommit:
 
             # Warn about detached HEAD but allow proceeding
             if repo_state.state.value == "detached":
-                display_warning(
-                    f"Working on detached HEAD at {repo_state.head_commit}"
-                )
+                display_warning(f"Working on detached HEAD at {repo_state.head_commit}")
                 if repo_state.suggestion and verbose:
                     console.print(f"\n{repo_state.suggestion}\n", style="dim")
 
@@ -138,7 +136,9 @@ class AutoCommit:
 
             # Preview mode: show changes and generate message, then exit
             if preview:
-                console.print("\n[bold cyan][PREVIEW][/bold cyan] Changes that would be committed:")
+                console.print(
+                    "\n[bold cyan][PREVIEW][/bold cyan] Changes that would be committed:"
+                )
                 # Generate message to preview
                 if message:
                     preview_message = message
@@ -148,15 +148,21 @@ class AutoCommit:
                     )
                 if scope:
                     preview_message = self._apply_scope(preview_message, scope)
-                console.print(f"\n[bold]Generated commit message:[/bold] {preview_message}")
+                console.print(
+                    f"\n[bold]Generated commit message:[/bold] {preview_message}"
+                )
                 if amend:
                     console.print("\n[dim]Would amend the last commit[/dim]")
-                console.print("\n[dim]No changes were made. Use without --preview to commit.[/dim]")
+                console.print(
+                    "\n[dim]No changes were made. Use without --preview to commit.[/dim]"
+                )
                 return 0
 
             # Stage all changes
             if dry_run:
-                console.print("\n[bold cyan][DRY RUN][/bold cyan] Would stage all changes")
+                console.print(
+                    "\n[bold cyan][DRY RUN][/bold cyan] Would stage all changes"
+                )
             else:
                 if self.config.show_progress:
                     with console.status(
@@ -213,11 +219,15 @@ class AutoCommit:
             # Commit
             commit_sha = None
             if dry_run:
-                action = "amend last commit" if amend else "create commit"
-                console.print(f"[bold cyan][DRY RUN][/bold cyan] Would {action}")
+                action_desc = "amend last commit" if amend else "create commit"
+                console.print(f"[bold cyan][DRY RUN][/bold cyan] Would {action_desc}")
             else:
                 try:
-                    status_msg = "[cyan]Amending commit...[/cyan]" if amend else "[cyan]Creating commit...[/cyan]"
+                    status_msg = (
+                        "[cyan]Amending commit...[/cyan]"
+                        if amend
+                        else "[cyan]Creating commit...[/cyan]"
+                    )
                     if self.config.show_progress:
                         with console.status(status_msg, spinner="dots"):
                             commit_sha = self._commit(commit_message, amend=amend)
@@ -234,7 +244,9 @@ class AutoCommit:
             # Push
             if push:
                 if dry_run:
-                    console.print("[bold cyan][DRY RUN][/bold cyan] Would push to remote")
+                    console.print(
+                        "[bold cyan][DRY RUN][/bold cyan] Would push to remote"
+                    )
                 else:
                     # Try to push, rollback on failure
                     try:
@@ -251,7 +263,9 @@ class AutoCommit:
                         if backup_branch:
                             self._delete_backup_branch(backup_branch)
                             if verbose:
-                                display_success(f"Cleaned up backup branch: {backup_branch}")
+                                display_success(
+                                    f"Cleaned up backup branch: {backup_branch}"
+                                )
 
                     except subprocess.CalledProcessError as e:
                         # Push failed - rollback if we have a commit
@@ -261,7 +275,9 @@ class AutoCommit:
                             display_success("Commit rolled back successfully")
 
                             if backup_branch:
-                                display_success(f"Your changes are preserved in branch: {backup_branch}")
+                                display_success(
+                                    f"Your changes are preserved in branch: {backup_branch}"
+                                )
 
                         # Raise PushFailedError with context
                         raise PushFailedError(stderr=e.stderr if e.stderr else None)
@@ -291,6 +307,7 @@ class AutoCommit:
             print_error(e, show_suggestion=False, use_colors=True)
             if verbose:
                 import traceback
+
                 print("\nFull traceback:", file=sys.stderr)
                 traceback.print_exc()
             return 1
@@ -359,10 +376,10 @@ class AutoCommit:
 
         # Remove or replace control characters (except newlines and tabs)
         # Control characters can cause display issues
-        message = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]', '', message)
+        message = re.sub(r"[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f]", "", message)
 
         # Ensure no null bytes (can cause subprocess issues)
-        if '\x00' in message:
+        if "\x00" in message:
             raise ValidationError(
                 message="Commit message contains null bytes",
                 field="commit_message",
@@ -508,7 +525,7 @@ class AutoCommit:
         """
         # Match conventional commit pattern: type: description
         # or type(existing_scope): description
-        pattern = r'^(\w+)(\([^)]+\))?:\s*(.*)$'
+        pattern = r"^(\w+)(\([^)]+\))?:\s*(.*)$"
         match = re.match(pattern, message, re.DOTALL)
 
         if match:

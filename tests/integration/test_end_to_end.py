@@ -13,9 +13,7 @@ from autocommit.core import AutoCommit
 class TestEndToEndWorkflows:
     """Integration tests for complete workflows."""
 
-    def test_full_commit_workflow(
-        self, git_repo_with_untracked_files: Path
-    ) -> None:
+    def test_full_commit_workflow(self, git_repo_with_untracked_files: Path) -> None:
         """Test complete workflow from detection to commit."""
         config = Config(interactive_mode=False)
 
@@ -50,9 +48,7 @@ class TestEndToEndWorkflows:
             )
             assert "feat: add new files" in result.stdout
 
-    def test_staged_changes_workflow(
-        self, git_repo_with_staged_changes: Path
-    ) -> None:
+    def test_staged_changes_workflow(self, git_repo_with_staged_changes: Path) -> None:
         """Test workflow with pre-staged changes."""
         config = Config(interactive_mode=False)
 
@@ -85,9 +81,7 @@ class TestEndToEndWorkflows:
             )
             assert "chore: update files" in result.stdout
 
-    def test_mixed_changes_workflow(
-        self, git_repo_with_mixed_changes: Path
-    ) -> None:
+    def test_mixed_changes_workflow(self, git_repo_with_mixed_changes: Path) -> None:
         """Test workflow with staged, unstaged, and untracked changes."""
         config = Config(interactive_mode=False)
 
@@ -120,9 +114,7 @@ class TestEndToEndWorkflows:
             )
             assert result.stdout.strip() == ""  # No uncommitted changes
 
-    def test_dry_run_workflow(
-        self, git_repo_with_untracked_files: Path
-    ) -> None:
+    def test_dry_run_workflow(self, git_repo_with_untracked_files: Path) -> None:
         """Test dry run doesn't make actual changes."""
         config = Config(interactive_mode=False)
 
@@ -160,9 +152,7 @@ class TestEndToEndWorkflows:
 
             assert commit_count_after == commit_count_before
 
-    def test_safe_mode_workflow(
-        self, git_repo_with_commits: Path
-    ) -> None:
+    def test_safe_mode_workflow(self, git_repo_with_commits: Path) -> None:
         """Test safe mode creates backup branch."""
         config = Config(interactive_mode=False)
 
@@ -239,9 +229,7 @@ class TestEndToEndWorkflows:
             assert "Committed:" in captured.out
             assert "Untracked Files:" in captured.out
 
-    def test_custom_message_workflow(
-        self, git_repo_with_untracked_files: Path
-    ) -> None:
+    def test_custom_message_workflow(self, git_repo_with_untracked_files: Path) -> None:
         """Test workflow with custom commit message (no LLM)."""
         config = Config(interactive_mode=False)
 
@@ -269,11 +257,11 @@ class TestEndToEndWorkflows:
             )
             assert "docs: add documentation" in result.stdout
 
-    def test_llm_failure_fallback(
-        self, git_repo_with_untracked_files: Path
-    ) -> None:
+    def test_llm_failure_fallback(self, git_repo_with_untracked_files: Path) -> None:
         """Test that LLM failure uses fallback message."""
-        config = Config(cache_enabled=False, interactive_mode=False)  # Disable cache to test fallback
+        config = Config(
+            cache_enabled=False, interactive_mode=False
+        )  # Disable cache to test fallback
 
         # Mock OpenAI to raise exception
         mock_client = MagicMock()

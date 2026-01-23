@@ -70,9 +70,7 @@ class TestCommitMessageCache:
         result = cache.get(changeset)
         assert result == "feat: add new feature"
 
-    def test_different_changesets_different_cache(
-        self, temp_cache_dir: Path
-    ) -> None:
+    def test_different_changesets_different_cache(self, temp_cache_dir: Path) -> None:
         """Test that different changesets have different cache entries."""
         cache = CommitMessageCache(cache_dir=temp_cache_dir)
 

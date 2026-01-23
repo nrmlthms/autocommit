@@ -321,9 +321,7 @@ def display_diff(diff_text: str, max_lines: int = 20) -> None:
     console.print(panel)
 
     if truncated:
-        console.print(
-            f"[dim]... {len(lines) - max_lines} more lines truncated[/dim]"
-        )
+        console.print(f"[dim]... {len(lines) - max_lines} more lines truncated[/dim]")
 
 
 def display_status(message: str) -> None:

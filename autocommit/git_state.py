@@ -1,7 +1,7 @@
 """Git repository state detection and validation."""
 
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Union
@@ -32,13 +32,8 @@ class RepositoryState:
     is_safe_for_commit: bool
     branch_name: Optional[str] = None
     head_commit: Optional[str] = None
-    conflicted_files: list[str] = None
+    conflicted_files: list[str] = field(default_factory=list)
     suggestion: Optional[str] = None
-
-    def __post_init__(self) -> None:
-        """Initialize mutable default values."""
-        if self.conflicted_files is None:
-            self.conflicted_files = []
 
 
 class GitStateDetector:
@@ -193,7 +188,7 @@ class GitStateDetector:
                     "apply": GitState.REBASE_IN_PROGRESS,
                 }
                 return RepositoryState(
-                    state=state_map.get(rebase_type, GitState.REBASE_IN_PROGRESS),
+                    state=state_map.get(rebase_type or "", GitState.REBASE_IN_PROGRESS),
                     is_safe_for_commit=False,
                     branch_name=branch_name,
                     head_commit=head_commit,

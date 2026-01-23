@@ -42,8 +42,7 @@ class TestFormatError:
     def test_format_autocommit_error(self) -> None:
         """Test formatting AutoCommitError."""
         error = AutoCommitError(
-            message="Something went wrong",
-            suggestion="Try this fix"
+            message="Something went wrong", suggestion="Try this fix"
         )
 
         formatted = format_error(error, show_suggestion=True, use_colors=False)
@@ -55,8 +54,7 @@ class TestFormatError:
     def test_format_error_without_suggestion(self) -> None:
         """Test formatting error without showing suggestion."""
         error = AutoCommitError(
-            message="Something went wrong",
-            suggestion="Try this fix"
+            message="Something went wrong", suggestion="Try this fix"
         )
 
         formatted = format_error(error, show_suggestion=False, use_colors=False)
@@ -70,7 +68,7 @@ class TestFormatError:
         error = GitError(
             message="Git command failed",
             stderr="fatal: remote error",
-            suggestion="Check remote"
+            suggestion="Check remote",
         )
 
         formatted = format_error(error, show_suggestion=True, use_colors=False)
@@ -90,10 +88,7 @@ class TestFormatError:
 
     def test_format_with_colors(self) -> None:
         """Test formatting with colors enabled."""
-        error = AutoCommitError(
-            message="Test error",
-            suggestion="Test suggestion"
-        )
+        error = AutoCommitError(message="Test error", suggestion="Test suggestion")
 
         # Just check it doesn't crash with colors
         formatted = format_error(error, show_suggestion=True, use_colors=True)
@@ -103,9 +98,7 @@ class TestFormatError:
 class TestPrintError:
     """Test cases for print_error function."""
 
-    def test_print_error_to_default_stderr(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_print_error_to_default_stderr(self, capsys: pytest.CaptureFixture) -> None:
         """Test printing error to stderr."""
         error = AutoCommitError("Test error")
 
@@ -123,14 +116,9 @@ class TestPrintError:
 
         assert "Test error" in output.getvalue()
 
-    def test_print_error_with_suggestion(
-        self, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_print_error_with_suggestion(self, capsys: pytest.CaptureFixture) -> None:
         """Test printing error with suggestion."""
-        error = ConfigurationError(
-            message="Invalid config",
-            config_key="temperature"
-        )
+        error = ConfigurationError(message="Invalid config", config_key="temperature")
 
         print_error(error, show_suggestion=True, use_colors=False)
 

@@ -1,6 +1,5 @@
 """Unit tests for retry utilities."""
 
-
 import pytest
 
 from autocommit.retry import (

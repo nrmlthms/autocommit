@@ -244,14 +244,14 @@ def config_cmd(
         # Create default config if doesn't exist
         if not config_file.exists():
             default_config = Config()
-            config_dict = {
+            default_config_dict: dict[str, str | int | float | bool] = {
                 "model": default_config.model,
                 "temperature": default_config.temperature,
                 "max_tokens": default_config.max_tokens,
                 "push_by_default": default_config.push_by_default,
             }
             with open(config_file, "w") as f:
-                json.dump(config_dict, f, indent=2)
+                json.dump(default_config_dict, f, indent=2)
 
         # Open in editor
         editor = os.environ.get("EDITOR", os.environ.get("VISUAL", "nano"))
@@ -284,25 +284,27 @@ def config_cmd(
 
         try:
             # Load existing config or create new dict
+            set_config_dict: dict[str, str | int | float | bool | None] = {}
             if config_file.exists():
                 with open(config_file, "r") as f:
-                    config_dict = json.load(f)
-            else:
-                config_dict = {}
+                    set_config_dict = json.load(f)
 
             # Try to parse value as appropriate type
+            parsed_value: str | int | float | bool
             try:
-                parsed_value: str | int | float | bool = json.loads(value)
+                parsed_value = json.loads(value)
             except json.JSONDecodeError:
                 parsed_value = value  # Keep as string if not valid JSON
 
-            config_dict[set_key] = parsed_value
+            set_config_dict[set_key] = parsed_value
 
             # Save config
             with open(config_file, "w") as f:
-                json.dump(config_dict, f, indent=2)
+                json.dump(set_config_dict, f, indent=2)
 
-            console.print(f"[green]✓[/green] Set {set_key} = [green]{parsed_value}[/green]")
+            console.print(
+                f"[green]✓[/green] Set {set_key} = [green]{parsed_value}[/green]"
+            )
 
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
@@ -368,12 +370,14 @@ def stats_cmd(
         for line in result.stdout.strip().split("\n"):
             parts = line.split("|", 3)
             if len(parts) == 4:
-                commits.append({
-                    "hash": parts[0],
-                    "author": parts[1],
-                    "date": parts[2],
-                    "message": parts[3],
-                })
+                commits.append(
+                    {
+                        "hash": parts[0],
+                        "author": parts[1],
+                        "date": parts[2],
+                        "message": parts[3],
+                    }
+                )
 
         # Create table
         table = Table(title=f"Recent Commits ({len(commits)} shown)", show_header=True)
@@ -525,7 +529,9 @@ def undo_cmd(
 
         console.print("[green]✓[/green] Successfully undone last commit")
         if not hard:
-            console.print("[dim]Changes are still staged. Use 'git status' to see them.[/dim]")
+            console.print(
+                "[dim]Changes are still staged. Use 'git status' to see them.[/dim]"
+            )
 
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error: {e}[/red]")

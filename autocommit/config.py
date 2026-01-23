@@ -29,7 +29,9 @@ class Config:
     safe_mode_by_default: bool = False
     verbose_by_default: bool = False
     interactive_mode: bool = True  # Prompt user to review/edit generated messages
-    show_progress: bool = True  # Show spinner/progress indicators during slow operations
+    show_progress: bool = (
+        True  # Show spinner/progress indicators during slow operations
+    )
 
     # Retry Settings
     api_retry_enabled: bool = True
@@ -112,13 +114,31 @@ class Config:
             "LAZYCOMMIT_MAX_TOKENS": ("max_tokens", int),
             "LAZYCOMMIT_MAX_MESSAGE_LENGTH": ("max_message_length", int),
             "LAZYCOMMIT_MAX_INPUT_TOKENS": ("max_input_tokens", int),
-            "LAZYCOMMIT_PUSH_BY_DEFAULT": ("push_by_default", lambda x: x.lower() in ("true", "1", "yes")),
-            "LAZYCOMMIT_SAFE_MODE": ("safe_mode_by_default", lambda x: x.lower() in ("true", "1", "yes")),
-            "LAZYCOMMIT_VERBOSE": ("verbose_by_default", lambda x: x.lower() in ("true", "1", "yes")),
-            "LAZYCOMMIT_API_RETRY_ENABLED": ("api_retry_enabled", lambda x: x.lower() in ("true", "1", "yes")),
+            "LAZYCOMMIT_PUSH_BY_DEFAULT": (
+                "push_by_default",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
+            "LAZYCOMMIT_SAFE_MODE": (
+                "safe_mode_by_default",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
+            "LAZYCOMMIT_VERBOSE": (
+                "verbose_by_default",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
+            "LAZYCOMMIT_API_RETRY_ENABLED": (
+                "api_retry_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
             "LAZYCOMMIT_API_MAX_RETRIES": ("api_max_retries", int),
-            "LAZYCOMMIT_CACHE_ENABLED": ("cache_enabled", lambda x: x.lower() in ("true", "1", "yes")),
-            "LAZYCOMMIT_OFFLINE_MODE": ("offline_mode", lambda x: x.lower() in ("true", "1", "yes")),
+            "LAZYCOMMIT_CACHE_ENABLED": (
+                "cache_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
+            "LAZYCOMMIT_OFFLINE_MODE": (
+                "offline_mode",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
         }
 
         for env_var, mapping in env_mappings.items():

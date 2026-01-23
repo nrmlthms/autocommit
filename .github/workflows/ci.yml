@@ -113,9 +113,10 @@ jobs:
         with:
           version: "latest"
 
-      - name: Install bandit
+      - name: Install dependencies and bandit
         run: |
-          uv pip install bandit
+          uv sync
+          uv add --dev bandit
 
       - name: Run bandit security scan
         run: |

@@ -91,7 +91,9 @@ class TestLLMCommitMessageGenerator:
         config = Config(temperature=0.7, max_tokens=100, max_message_length=0)
 
         with patch("autocommit.generator.OpenAI"):
-            with pytest.raises(ValidationError, match="max_message_length must be positive"):
+            with pytest.raises(
+                ValidationError, match="max_message_length must be positive"
+            ):
                 LLMCommitMessageGenerator(config=config, api_key="test-key")
 
     def test_validate_config_warns_high_max_tokens(self, capsys: Any) -> None:

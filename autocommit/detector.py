@@ -11,6 +11,7 @@ from .exceptions import NotAGitRepositoryError
 
 class FileStatus(Enum):
     """Git file status types."""
+
     MODIFIED = "M"
     ADDED = "A"
     DELETED = "D"
@@ -23,6 +24,7 @@ class FileStatus(Enum):
 @dataclass
 class FileChange:
     """Represents a single file change."""
+
     path: Path
     status: FileStatus
     staged: bool
@@ -36,6 +38,7 @@ class FileChange:
 @dataclass
 class ChangeSet:
     """Collection of changes in the repository."""
+
     staged_changes: List[FileChange]
     unstaged_changes: List[FileChange]
     untracked_files: List[Path]
@@ -136,9 +139,7 @@ class ChangeDetector:
             if include_diffs and status != FileStatus.DELETED:
                 diff = self._get_file_diff(file_path, staged=True)
 
-            changes.append(
-                FileChange(path=path, status=status, staged=True, diff=diff)
-            )
+            changes.append(FileChange(path=path, status=status, staged=True, diff=diff))
 
         return changes
 
@@ -244,9 +245,7 @@ class ChangeDetector:
 
     def is_file_ignored(self, file_path: Union[str, Path]) -> bool:
         """Check if a file is ignored by git."""
-        result = self._run_git_command(
-            ["check-ignore", str(file_path)], check=False
-        )
+        result = self._run_git_command(["check-ignore", str(file_path)], check=False)
         return result.returncode == 0
 
     def stage_file(self, file_path: Union[str, Path]) -> None:
@@ -277,9 +276,7 @@ class ChangeDetector:
             Set of modified file paths
         """
         if since:
-            result = self._run_git_command(
-                ["diff", "--name-only", since], check=False
-            )
+            result = self._run_git_command(["diff", "--name-only", since], check=False)
         else:
             result = self._run_git_command(["diff", "--name-only"], check=False)
 
@@ -310,9 +307,7 @@ if __name__ == "__main__":
         print("Unstaged changes:")
         for change in changes.unstaged_changes:
             stats = detector.get_diff_stats(change.path)
-            print(
-                f"  {change} (+{stats['additions']} -{stats['deletions']})"
-            )
+            print(f"  {change} (+{stats['additions']} -{stats['deletions']})")
         print()
 
     if changes.untracked_files:

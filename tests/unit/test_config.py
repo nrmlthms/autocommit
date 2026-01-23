@@ -189,7 +189,9 @@ class TestConfig:
             for false_value in ["false", "FALSE", "0", "no", "NO"]:
                 os.environ["LAZYCOMMIT_PUSH_BY_DEFAULT"] = false_value
                 config = Config.load()
-                assert config.push_by_default is False, f"Failed for value: {false_value}"
+                assert config.push_by_default is False, (
+                    f"Failed for value: {false_value}"
+                )
         finally:
             if original_env is None:
                 os.environ.pop("LAZYCOMMIT_PUSH_BY_DEFAULT", None)

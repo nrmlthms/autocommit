@@ -138,9 +138,7 @@ class TestAutoCommitGitStates:
             captured = capsys.readouterr()
             assert "detached" in captured.err.lower()
 
-    def test_autocommit_merge_conflict_fails(
-        self, git_repo_with_commit: Path
-    ) -> None:
+    def test_autocommit_merge_conflict_fails(self, git_repo_with_commit: Path) -> None:
         """Test AutoCommit fails with merge conflict."""
         config = Config(interactive_mode=False)
 
@@ -340,7 +338,9 @@ class TestAutoCommitGitStates:
             assert exit_code == 0
 
             captured = capsys.readouterr()
-            assert "detached" in captured.err.lower() or "detached" in captured.out.lower()
+            assert (
+                "detached" in captured.err.lower() or "detached" in captured.out.lower()
+            )
 
 
 class TestGitStateErrorMessages:
@@ -416,6 +416,4 @@ class TestGitStateErrorMessages:
 
         # Check for helpful information in error message
         assert "merge" in error_output.lower()
-        assert (
-            "conflict" in error_output.lower() or "abort" in error_output.lower()
-        )
+        assert "conflict" in error_output.lower() or "abort" in error_output.lower()
