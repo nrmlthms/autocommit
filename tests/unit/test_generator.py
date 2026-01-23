@@ -103,7 +103,7 @@ class TestLLMCommitMessageGenerator:
             gen = LLMCommitMessageGenerator(config=config, api_key="test-key")
 
             captured = capsys.readouterr()
-            assert "Warning" in captured.err
+            assert "⚠" in captured.err
             assert "unusually high" in captured.err
 
     def test_estimate_token_count(self) -> None:
@@ -270,7 +270,7 @@ class TestLLMCommitMessageGenerator:
 
             # Should print warning
             captured = capsys.readouterr()
-            assert "Warning" in captured.err
+            assert "⚠" in captured.err
             assert "LLM generation failed" in captured.err
 
     def test_generate_warns_high_token_usage(self, capsys: Any) -> None:
@@ -309,7 +309,7 @@ class TestLLMCommitMessageGenerator:
             message = gen.generate_from_changeset(changeset, mock_detector)
 
             captured = capsys.readouterr()
-            assert "Warning" in captured.err
+            assert "⚠" in captured.err
             assert "token usage" in captured.err
 
     def test_build_context(self) -> None:

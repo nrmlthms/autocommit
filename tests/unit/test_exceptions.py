@@ -8,6 +8,7 @@ from autocommit.exceptions import (
     CommitFailedError,
     ConfigurationError,
     GitError,
+    GitStateError,
     NoChangesError,
     NotAGitRepositoryError,
     PushFailedError,
@@ -67,6 +68,21 @@ class TestNotAGitRepositoryError:
         assert error.suggestion is not None
         assert "git init" in error.suggestion
         assert error.path == "/some/path"
+
+
+class TestGitStateError:
+    """Test cases for GitStateError."""
+
+    def test_init_with_state(self) -> None:
+        """Test creating GitStateError."""
+        error = GitStateError(
+            state="merge",
+            suggestion="Resolve conflicts and complete merge"
+        )
+
+        assert "merge" in error.message
+        assert error.state == "merge"
+        assert error.suggestion == "Resolve conflicts and complete merge"
 
 
 class TestNoChangesError:

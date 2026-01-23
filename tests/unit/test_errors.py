@@ -148,7 +148,8 @@ class TestPrintWarning:
 
         captured = capsys.readouterr()
         assert "This is a warning" in captured.err
-        assert "Warning:" in captured.err
+        # Rich format uses emoji instead of "Warning:"
+        assert "⚠" in captured.err
 
 
 class TestPrintSuccess:

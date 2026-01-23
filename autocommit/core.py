@@ -12,11 +12,23 @@ from .errors import print_error, print_success, print_warning
 from .exceptions import (
     AutoCommitError,
     CommitFailedError,
+    GitStateError,
     NoChangesError,
     PushFailedError,
     ValidationError,
 )
 from .generator import LLMCommitMessageGenerator
+from .git_state import GitStateDetector
+from .prompts import (
+    console,
+    display_changes_summary,
+    display_file_list,
+    display_info,
+    display_status,
+    display_success,
+    display_warning,
+    prompt_commit_message_review,
+)
 
 
 class AutoCommit:
@@ -53,6 +65,7 @@ class AutoCommit:
             self.repo_path = Path.cwd()
 
         self.detector = ChangeDetector(self.repo_path)
+        self.state_detector = GitStateDetector(self.repo_path)
         self.message_generator = LLMCommitMessageGenerator(
             config=config, api_key=api_key, model=model
         )
@@ -79,17 +92,38 @@ class AutoCommit:
             Exit code (0 for success, non-zero for failure)
         """
         try:
+            # Check repository state
+            if verbose:
+                display_status("Checking repository state...")
+
+            repo_state = self.state_detector.get_state()
+
+            # Handle unsafe states
+            if not repo_state.is_safe_for_commit:
+                raise GitStateError(
+                    state=repo_state.state.value,
+                    suggestion=repo_state.suggestion,
+                )
+
+            # Warn about detached HEAD but allow proceeding
+            if repo_state.state.value == "detached":
+                display_warning(
+                    f"Working on detached HEAD at {repo_state.head_commit}"
+                )
+                if repo_state.suggestion and verbose:
+                    console.print(f"\n{repo_state.suggestion}\n", style="dim")
+
             # Detect changes
             if verbose:
-                print("Detecting changes...")
+                display_status("Detecting changes...")
 
             changeset = self.detector.get_changes(include_diffs=True)
 
             if not changeset.has_changes:
                 if verbose:
-                    print_warning("No changes detected. Nothing to commit.")
+                    display_warning("No changes detected. Nothing to commit.")
                 else:
-                    print("No changes detected. Nothing to commit.")
+                    console.print("No changes detected. Nothing to commit.")
                 return 0
 
             # Display changes
@@ -97,42 +131,62 @@ class AutoCommit:
 
             # Stage all changes
             if dry_run:
-                print("\n[DRY RUN] Would stage all changes")
+                console.print("\n[bold cyan][DRY RUN][/bold cyan] Would stage all changes")
             else:
                 if verbose:
-                    print("\nStaging all changes...")
+                    display_status("Staging all changes...")
                 self.detector.stage_all()
 
             # Generate or use provided commit message
             if message:
                 commit_message = message
+                use_interactive = False  # Skip prompt if message provided explicitly
             else:
                 if verbose:
-                    print("\nGenerating commit message with LLM...")
+                    display_status("Generating commit message with LLM...")
                 commit_message = self.message_generator.generate_from_changeset(
                     changeset, self.detector
                 )
+                use_interactive = self.config.interactive_mode and not dry_run
+
+            # Interactive review (if enabled and message was auto-generated)
+            if use_interactive:
+                action, edited_message = prompt_commit_message_review(
+                    commit_message,
+                    allow_edit=True,
+                )
+
+                if action == "no":
+                    console.print("[yellow]Commit cancelled by user.[/yellow]")
+                    return 0
+                elif action == "edit" and edited_message:
+                    commit_message = edited_message
+                    console.print()
+                    display_success("Using edited message")
+                # If action == "yes", just continue with original message
 
             if verbose or dry_run:
-                print(f"\nCommit message: {commit_message}")
+                if not use_interactive:  # Don't print again if already shown in prompt
+                    console.print(f"\n[bold]Commit message:[/bold] {commit_message}")
 
             # Create backup branch if safe mode is enabled
             backup_branch = None
             if safe_mode and not dry_run:
                 backup_branch = self._create_backup_branch()
                 if verbose:
-                    print(f"\n✓ Created backup branch: {backup_branch}")
+                    console.print()
+                    display_success(f"Created backup branch: {backup_branch}")
 
             # Commit
             commit_sha = None
             if dry_run:
-                print("[DRY RUN] Would create commit")
+                console.print("[bold cyan][DRY RUN][/bold cyan] Would create commit")
             else:
                 if verbose:
-                    print("\nCreating commit...")
+                    display_status("Creating commit...")
                 try:
                     commit_sha = self._commit(commit_message)
-                    print_success(f"Committed: {commit_message}")
+                    display_success(f"Committed: {commit_message}")
                 except subprocess.CalledProcessError as e:
                     raise CommitFailedError(
                         message=str(e),
@@ -142,31 +196,32 @@ class AutoCommit:
             # Push
             if push:
                 if dry_run:
-                    print("[DRY RUN] Would push to remote")
+                    console.print("[bold cyan][DRY RUN][/bold cyan] Would push to remote")
                 else:
                     if verbose:
-                        print("\nPushing to remote...")
+                        console.print()
+                        display_status("Pushing to remote...")
 
                     # Try to push, rollback on failure
                     try:
                         self._push()
-                        print_success("Pushed to remote")
+                        display_success("Pushed to remote")
 
                         # Clean up backup branch on successful push
                         if backup_branch:
                             self._delete_backup_branch(backup_branch)
                             if verbose:
-                                print_success(f"Cleaned up backup branch: {backup_branch}")
+                                display_success(f"Cleaned up backup branch: {backup_branch}")
 
                     except subprocess.CalledProcessError as e:
                         # Push failed - rollback if we have a commit
                         if commit_sha:
-                            print_warning("Push failed. Rolling back commit...")
+                            display_warning("Push failed. Rolling back commit...")
                             self._rollback_commit(backup_branch)
-                            print_success("Commit rolled back successfully")
+                            display_success("Commit rolled back successfully")
 
                             if backup_branch:
-                                print_success(f"Your changes are preserved in branch: {backup_branch}")
+                                display_success(f"Your changes are preserved in branch: {backup_branch}")
 
                         # Raise PushFailedError with context
                         raise PushFailedError(stderr=e.stderr if e.stderr else None)
@@ -201,23 +256,36 @@ class AutoCommit:
             return 1
 
     def _display_changes(self, changeset: ChangeSet, verbose: bool = False) -> None:
-        """Display detected changes."""
-        print(f"\nFound {changeset.total_changes} change(s):")
+        """Display detected changes using rich formatting."""
+        # Display summary
+        display_changes_summary(
+            staged=len(changeset.staged_changes),
+            unstaged=len(changeset.unstaged_changes),
+            untracked=len(changeset.untracked_files),
+        )
 
-        if changeset.staged_changes and verbose:
-            print("\nStaged changes:")
-            for change in changeset.staged_changes:
-                print(f"  {change.status.value} {change.path.name}")
+        # Display file lists if verbose
+        if verbose:
+            if changeset.staged_changes:
+                display_file_list(
+                    [str(c.path.name) for c in changeset.staged_changes],
+                    title="Staged Changes",
+                    style="green",
+                )
 
-        if changeset.unstaged_changes:
-            print("\nUnstaged changes:")
-            for change in changeset.unstaged_changes:
-                print(f"  {change.status.value} {change.path.name}")
+            if changeset.unstaged_changes:
+                display_file_list(
+                    [str(c.path.name) for c in changeset.unstaged_changes],
+                    title="Unstaged Changes",
+                    style="yellow",
+                )
 
-        if changeset.untracked_files:
-            print("\nUntracked files:")
-            for path in changeset.untracked_files:
-                print(f"  ?? {path.name}")
+            if changeset.untracked_files:
+                display_file_list(
+                    [str(p.name) for p in changeset.untracked_files],
+                    title="Untracked Files",
+                    style="blue",
+                )
 
     def _validate_commit_message(self, message: str) -> str:
         """

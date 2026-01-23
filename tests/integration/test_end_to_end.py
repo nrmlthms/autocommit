@@ -23,7 +23,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path
     ) -> None:
         """Test complete workflow from detection to commit."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Mock OpenAI response
         mock_response = MagicMock()
@@ -60,7 +60,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_staged_changes: Path
     ) -> None:
         """Test workflow with pre-staged changes."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -95,7 +95,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_mixed_changes: Path
     ) -> None:
         """Test workflow with staged, unstaged, and untracked changes."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -130,7 +130,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path
     ) -> None:
         """Test dry run doesn't make actual changes."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.generator.OpenAI"):
             autocommit = AutoCommit(
@@ -170,7 +170,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_commits: Path
     ) -> None:
         """Test safe mode creates backup branch."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Create a change
         (git_repo_with_commits / "test.txt").write_text("Test content\n")
@@ -218,7 +218,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test verbose mode produces detailed output."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -250,7 +250,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path
     ) -> None:
         """Test workflow with custom commit message (no LLM)."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.generator.OpenAI"):
             autocommit = AutoCommit(
@@ -280,7 +280,7 @@ class TestEndToEndWorkflows:
         self, git_repo_with_untracked_files: Path
     ) -> None:
         """Test that LLM failure uses fallback message."""
-        config = Config(cache_enabled=False)  # Disable cache to test fallback
+        config = Config(cache_enabled=False, interactive_mode=False)  # Disable cache to test fallback
 
         # Mock OpenAI to raise exception
         mock_client = MagicMock()

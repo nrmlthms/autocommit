@@ -82,7 +82,7 @@ class TestAutoCommit:
 
     def test_run_no_changes(self, temp_git_repo: Path, capsys: pytest.CaptureFixture) -> None:
         """Test run with no changes."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -99,7 +99,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test run with custom commit message."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
@@ -121,7 +121,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test dry run mode."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
@@ -143,7 +143,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test run with LLM-generated message."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
@@ -167,7 +167,7 @@ class TestAutoCommit:
 
     def test_validate_commit_message_valid(self, temp_git_repo: Path) -> None:
         """Test validating a valid commit message."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -183,7 +183,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path
     ) -> None:
         """Test that commit message validation strips whitespace."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -197,7 +197,7 @@ class TestAutoCommit:
 
     def test_validate_commit_message_empty(self, temp_git_repo: Path) -> None:
         """Test that empty commit message is rejected."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -227,7 +227,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path
     ) -> None:
         """Test that control characters are removed."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -244,7 +244,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test displaying changes."""
-        config = Config()
+        config = Config(interactive_mode=False)
         changeset = ChangeSet(
             staged_changes=[
                 FileChange(
@@ -271,16 +271,19 @@ class TestAutoCommit:
             autocommit._display_changes(changeset, verbose=True)
 
             captured = capsys.readouterr()
-            assert "3 change(s)" in captured.out
-            assert "Staged changes" in captured.out
-            assert "Unstaged changes" in captured.out
-            assert "Untracked files" in captured.out
+            # Check for rich formatted output
+            assert "1 staged" in captured.out
+            assert "1 unstaged" in captured.out
+            assert "1 untracked" in captured.out
+            assert "Staged Changes" in captured.out
+            assert "Unstaged Changes" in captured.out
+            assert "Untracked Files" in captured.out
 
     def test_run_with_safe_mode(
         self, temp_git_repo: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test run with safe mode enabled."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Create a change
         (temp_git_repo / "test.txt").write_text("Test content\n")
@@ -302,7 +305,7 @@ class TestAutoCommit:
 
     def test_commit_creates_commit(self, temp_git_repo: Path) -> None:
         """Test that _commit creates a git commit."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         # Create and stage a file
         test_file = temp_git_repo / "test.txt"
@@ -326,7 +329,7 @@ class TestAutoCommit:
 
     def test_create_backup_branch(self, temp_git_repo: Path) -> None:
         """Test creating backup branch."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -348,7 +351,7 @@ class TestAutoCommit:
 
     def test_delete_backup_branch(self, temp_git_repo: Path) -> None:
         """Test deleting backup branch."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(
@@ -374,7 +377,7 @@ class TestAutoCommit:
         self, temp_git_repo: Path, capsys: pytest.CaptureFixture
     ) -> None:
         """Test push when no remote is configured."""
-        config = Config()
+        config = Config(interactive_mode=False)
 
         with patch("autocommit.core.LLMCommitMessageGenerator"):
             autocommit = AutoCommit(

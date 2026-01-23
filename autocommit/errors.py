@@ -1,42 +1,17 @@
-"""Error formatting and display utilities."""
+"""Error formatting and display utilities using Rich."""
 
 import sys
 from typing import Any, Optional, TextIO
 
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+
 from .exceptions import AutoCommitError
 
-
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    MAGENTA = "\033[95m"
-    CYAN = "\033[96m"
-    GRAY = "\033[90m"
-
-    @staticmethod
-    def is_tty() -> bool:
-        """Check if output is a TTY (terminal)."""
-        return sys.stderr.isatty()
-
-    @classmethod
-    def disable_if_not_tty(cls) -> None:
-        """Disable colors if not outputting to a terminal."""
-        if not cls.is_tty():
-            cls.RESET = ""
-            cls.BOLD = ""
-            cls.RED = ""
-            cls.GREEN = ""
-            cls.YELLOW = ""
-            cls.BLUE = ""
-            cls.MAGENTA = ""
-            cls.CYAN = ""
-            cls.GRAY = ""
+# Create console instances for different outputs
+console_stderr = Console(stderr=True)
+console_stdout = Console()
 
 
 def format_error(
@@ -50,50 +25,41 @@ def format_error(
     Args:
         error: The exception to format
         show_suggestion: Whether to show actionable suggestions
-        use_colors: Whether to use ANSI colors
+        use_colors: Whether to use colors
 
     Returns:
         Formatted error message
     """
-    if use_colors:
-        Colors.disable_if_not_tty()
-    else:
-        Colors.disable_if_not_tty()
-        Colors.RESET = ""
-        Colors.BOLD = ""
-        Colors.RED = ""
-        Colors.YELLOW = ""
-        Colors.CYAN = ""
-        Colors.GRAY = ""
+    # Create a temporary console for rendering to string
+    temp_console = Console(force_terminal=use_colors, width=80)
 
-    lines = []
+    with temp_console.capture() as capture:
+        if isinstance(error, AutoCommitError):
+            error_type = error.__class__.__name__.replace("Error", "")
 
-    # Error header
-    if isinstance(error, AutoCommitError):
-        error_type = error.__class__.__name__.replace("Error", "")
-        lines.append(
-            f"{Colors.BOLD}{Colors.RED}✗ {error_type} Error:{Colors.RESET} {error.message}"
-        )
+            # Build error message
+            parts = []
+            parts.append(f"[bold red]✗ {error_type} Error:[/bold red] {error.message}")
 
-        # Show suggestion if available
-        if show_suggestion and error.suggestion:
-            lines.append("")
-            lines.append(f"{Colors.CYAN}💡 Suggestion:{Colors.RESET}")
-            # Indent suggestion lines
-            for line in error.suggestion.split("\n"):
-                lines.append(f"   {line}")
+            # Show suggestion if available
+            if show_suggestion and error.suggestion:
+                parts.append("")
+                parts.append("[bold cyan]💡 Suggestion:[/bold cyan]")
+                for line in error.suggestion.split("\n"):
+                    parts.append(f"   {line}")
 
-        # Show additional context for specific error types
-        if hasattr(error, "stderr") and error.stderr:
-            lines.append("")
-            lines.append(f"{Colors.GRAY}Git output:{Colors.RESET}")
-            lines.append(f"   {error.stderr}")
+            # Show additional context for specific error types
+            if hasattr(error, "stderr") and error.stderr:
+                parts.append("")
+                parts.append("[dim]Git output:[/dim]")
+                parts.append(f"   {error.stderr}")
 
-    else:
-        # Generic error formatting
-        lines.append(f"{Colors.BOLD}{Colors.RED}✗ Error:{Colors.RESET} {str(error)}")
+            temp_console.print("\n".join(parts))
+        else:
+            # Generic error formatting
+            temp_console.print(f"[bold red]✗ Error:[/bold red] {str(error)}")
 
-    return "\n".join(lines)
+    return capture.get().rstrip()
 
 
 def print_error(
@@ -108,13 +74,39 @@ def print_error(
     Args:
         error: The exception to print
         show_suggestion: Whether to show actionable suggestions
-        use_colors: Whether to use ANSI colors
+        use_colors: Whether to use colors
         file: File to write to (default: sys.stderr)
     """
-    output_file: TextIO = file if file is not None else sys.stderr
+    if file is not None:
+        # If specific file provided, use string formatting
+        formatted = format_error(error, show_suggestion, use_colors)
+        print(formatted, file=file)
+    else:
+        # Use rich console for stderr
+        if isinstance(error, AutoCommitError):
+            error_type = error.__class__.__name__.replace("Error", "")
 
-    formatted = format_error(error, show_suggestion, use_colors)
-    print(formatted, file=output_file)
+            # Build error message
+            parts = []
+            parts.append(f"[bold red]✗ {error_type} Error:[/bold red] {error.message}")
+
+            # Show suggestion if available
+            if show_suggestion and error.suggestion:
+                parts.append("")
+                parts.append("[bold cyan]💡 Suggestion:[/bold cyan]")
+                for line in error.suggestion.split("\n"):
+                    parts.append(f"   {line}")
+
+            # Show additional context for specific error types
+            if hasattr(error, "stderr") and error.stderr:
+                parts.append("")
+                parts.append("[dim]Git output:[/dim]")
+                parts.append(f"   {error.stderr}")
+
+            console_stderr.print("\n".join(parts))
+        else:
+            # Generic error formatting
+            console_stderr.print(f"[bold red]✗ Error:[/bold red] {str(error)}")
 
 
 def print_warning(message: str, use_colors: bool = True) -> None:
@@ -123,19 +115,11 @@ def print_warning(message: str, use_colors: bool = True) -> None:
 
     Args:
         message: Warning message
-        use_colors: Whether to use ANSI colors
+        use_colors: Whether to use colors
     """
-    if use_colors:
-        Colors.disable_if_not_tty()
-    else:
-        Colors.disable_if_not_tty()
-        Colors.RESET = ""
-        Colors.BOLD = ""
-        Colors.YELLOW = ""
-
-    print(
-        f"{Colors.BOLD}{Colors.YELLOW}⚠ Warning:{Colors.RESET} {message}",
-        file=sys.stderr,
+    console_stderr.print(
+        f"[bold yellow]⚠[/bold yellow]  {message}",
+        style="yellow" if use_colors else None,
     )
 
 
@@ -145,14 +129,39 @@ def print_success(message: str, use_colors: bool = True) -> None:
 
     Args:
         message: Success message
-        use_colors: Whether to use ANSI colors
+        use_colors: Whether to use colors
     """
-    if use_colors:
-        Colors.disable_if_not_tty()
-    else:
-        Colors.disable_if_not_tty()
-        Colors.RESET = ""
-        Colors.BOLD = ""
-        Colors.GREEN = ""
+    console_stdout.print(
+        f"[bold green]✓[/bold green]  {message}",
+        style="green" if use_colors else None,
+    )
 
-    print(f"{Colors.BOLD}{Colors.GREEN}✓{Colors.RESET} {message}")
+
+# Legacy compatibility for Colors class (for tests)
+class Colors:
+    """
+    Compatibility class for existing tests.
+
+    Note: This is kept for backward compatibility but all new code
+    should use rich directly via the prompts module.
+    """
+
+    RESET = ""
+    BOLD = ""
+    RED = ""
+    GREEN = ""
+    YELLOW = ""
+    BLUE = ""
+    MAGENTA = ""
+    CYAN = ""
+    GRAY = ""
+
+    @staticmethod
+    def is_tty() -> bool:
+        """Check if output is a TTY (terminal)."""
+        return sys.stderr.isatty()
+
+    @classmethod
+    def disable_if_not_tty(cls) -> None:
+        """No-op for compatibility."""
+        pass

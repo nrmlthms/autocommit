@@ -26,6 +26,7 @@ dependencies = [
     "mypy>=1.19.1",
     "openai>=1.0.0",
     "twine>=6.2.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]

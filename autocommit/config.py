@@ -28,6 +28,7 @@ class Config:
     push_by_default: bool = True
     safe_mode_by_default: bool = False
     verbose_by_default: bool = False
+    interactive_mode: bool = True  # Prompt user to review/edit generated messages
 
     # Retry Settings
     api_retry_enabled: bool = True

@@ -10,12 +10,14 @@ from .exceptions import (
     CommitFailedError,
     ConfigurationError,
     GitError,
+    GitStateError,
     NoChangesError,
     NotAGitRepositoryError,
     PushFailedError,
     ValidationError,
 )
 from .generator import LLMCommitMessageGenerator
+from .git_state import GitState, GitStateDetector, RepositoryState
 from .retry import exponential_backoff, retry_on_api_error
 
 __version__ = "0.1.0"
@@ -28,9 +30,14 @@ __all__ = [
     "FileStatus",
     "LLMCommitMessageGenerator",
     "CommitMessageCache",
+    # Git state
+    "GitState",
+    "GitStateDetector",
+    "RepositoryState",
     # Exceptions
     "AutoCommitError",
     "GitError",
+    "GitStateError",
     "NotAGitRepositoryError",
     "NoChangesError",
     "CommitFailedError",

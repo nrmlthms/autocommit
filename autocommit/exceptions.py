@@ -66,6 +66,24 @@ class NoChangesError(AutoCommitError):
         )
 
 
+class GitStateError(GitError):
+    """Repository is in an unsafe state for committing."""
+
+    def __init__(self, state: str, suggestion: Optional[str] = None):
+        """
+        Initialize GitStateError.
+
+        Args:
+            state: Description of the current git state
+            suggestion: Optional actionable suggestion for resolving the state
+        """
+        super().__init__(
+            message=f"Repository is in {state} state",
+            suggestion=suggestion,
+        )
+        self.state = state
+
+
 class CommitFailedError(GitError):
     """Commit creation failed."""
 
